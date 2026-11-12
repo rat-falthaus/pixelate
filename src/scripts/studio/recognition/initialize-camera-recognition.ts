@@ -3,10 +3,11 @@ import { getElement } from '../dom/get-element';
 import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
 import { ensureSubjectDetectors } from './ensure-subject-detectors';
+import { updateLiveUi } from '../ui/update-live-ui';
 
 /** Initialize optional recognition after live rendering starts, with explicit independent failure paths. */
 export async function initializeCameraRecognition(): Promise<void> {
-  await Promise.all([
+  const recognition = Promise.all([
     ensureSubjectDetectors().catch((error: unknown) => {
       console.error('Local face/object recognition could not be initialized.', error);
       getElement('recognition-status').textContent =
@@ -30,4 +31,7 @@ export async function initializeCameraRecognition(): Promise<void> {
       notify('Gesture recognition is unavailable. Use the capture button instead.');
     }),
   ]);
+  updateLiveUi();
+  await recognition;
+  updateLiveUi();
 }

@@ -3,6 +3,8 @@ import { renderArtwork } from '../artwork/render-artwork';
 import { elements } from '../dom/elements';
 import { model } from '../state/model';
 import { bindRange } from './bind-range';
+import { isPositionLocked } from '../../../lib/config';
+import { updateLiveUi } from '../ui/update-live-ui';
 
 /** Connect message content, placement, scale, and signature controls. */
 export function bindMessageEvents(): void {
@@ -18,12 +20,11 @@ export function bindMessageEvents(): void {
   });
   document.querySelectorAll<HTMLButtonElement>('[data-position]').forEach((button) => {
     button.addEventListener('click', () => {
+      if (isPositionLocked(model.config, 'message')) return;
       model.messagePosition = button.dataset.position as MessagePosition;
       model.messageOrigin = null;
-      document.querySelectorAll<HTMLButtonElement>('[data-position]').forEach((candidate) => {
-        candidate.classList.toggle('is-selected', candidate === button);
-      });
       renderArtwork();
+      updateLiveUi();
     });
   });
   bindRange(elements.messageScale, elements.messageScaleValue, (value) => {

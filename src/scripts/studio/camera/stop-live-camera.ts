@@ -1,11 +1,11 @@
 import { elements } from '../dom/elements';
-import { getElement } from '../dom/get-element';
 import { setImageSource } from '../photo/set-image-source';
 import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { updateLiveUi } from '../ui/update-live-ui';
 import { drawCameraFrame } from './draw-camera-frame';
 import { updateSubjectMask } from '../recognition/update-subject-mask';
+import { cancelFreezeCountdown } from './cancel-freeze-countdown';
 
 /** Cancel live capture resources, optionally retaining a higher-resolution frozen frame. */
 export function stopLiveCamera(freeze: boolean): void {
@@ -22,9 +22,9 @@ export function stopLiveCamera(freeze: boolean): void {
   model.freezePreview = false;
   runtime.gestureStartedAt = 0;
   runtime.gesturePalmPoint = null;
-  window.clearInterval(runtime.gestureCountdownTimer);
+  runtime.gestureArmed = true;
+  cancelFreezeCountdown();
   window.clearTimeout(runtime.freezePreviewTimer);
-  getElement('gesture-countdown').classList.add('is-hidden');
   cancelAnimationFrame(runtime.liveFrameRequest);
   runtime.liveFrameRequest = 0;
   runtime.liveCameraStream?.getTracks().forEach((track) => track.stop());

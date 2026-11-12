@@ -3,6 +3,7 @@ import { saveTileUndoSnapshot } from '../artwork/save-tile-undo-snapshot';
 import { elements } from '../dom/elements';
 import { model } from '../state/model';
 import { runtime } from '../state/runtime';
+import { isPositionLocked } from '../../../lib/config';
 
 /** Start artwork dragging or painting without intercepting interactive controls. */
 export function handleStagePointerDown(event: PointerEvent): void {
@@ -19,7 +20,7 @@ export function handleStagePointerDown(event: PointerEvent): void {
   if (
     messageTarget &&
     model.messageEnabled &&
-    !model.config.messagePositionLocked &&
+    !isPositionLocked(model.config, 'message') &&
     model.tool === 'pan'
   ) {
     const rect = elements.artboard.getBoundingClientRect();
@@ -35,7 +36,7 @@ export function handleStagePointerDown(event: PointerEvent): void {
     elements.stage.dataset.draggingMessage = 'true';
     return;
   }
-  if (logoTarget && !model.config.logoPositionLocked && model.tool === 'pan') {
+  if (logoTarget && !isPositionLocked(model.config, 'logo') && model.tool === 'pan') {
     const rect = elements.artboard.getBoundingClientRect();
     const pointerCol = Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols);
     const pointerRow = Math.floor(((event.clientY - rect.top) / rect.height) * model.gridRows);

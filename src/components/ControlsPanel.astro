@@ -69,16 +69,16 @@
         <textarea id="message-text" rows="3" maxlength="160" spellcheck="false">MAKE
 SOMETHING
 MATTER.</textarea>
-        <div class="segmented" aria-label="Message position">
-          <button type="button" data-position="topleft">↖</button>
-          <button type="button" data-position="upper" class="is-selected">↑</button>
-          <button type="button" data-position="topright">↗</button>
-          <button type="button" data-position="middleleft">←</button>
-          <button type="button" data-position="center">·</button>
-          <button type="button" data-position="middleright">→</button>
-          <button type="button" data-position="bottomleft">↙</button>
-          <button type="button" data-position="lower">↓</button>
-          <button type="button" data-position="bottomright">↘</button>
+        <div class="segmented position-grid" aria-label="Message position">
+          <button type="button" data-position="topleft" aria-label="Move message to top left">↖</button>
+          <button type="button" data-position="upper" class="is-selected" aria-label="Move message to top center">↑</button>
+          <button type="button" data-position="topright" aria-label="Move message to top right">↗</button>
+          <button type="button" data-position="middleleft" aria-label="Move message to center left">←</button>
+          <button type="button" data-position="center" aria-label="Move message to center">·</button>
+          <button type="button" data-position="middleright" aria-label="Move message to center right">→</button>
+          <button type="button" data-position="bottomleft" aria-label="Move message to bottom left">↙</button>
+          <button type="button" data-position="lower" aria-label="Move message to bottom center">↓</button>
+          <button type="button" data-position="bottomright" aria-label="Move message to bottom right">↘</button>
         </div>
         <label class="range-control">
           <span><span>Type scale</span><output id="message-scale-value">100%</output></span>

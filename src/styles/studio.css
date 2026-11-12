@@ -367,7 +367,7 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
 }
 #svg-output, #svg-output svg { display: block; }
 #original-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-.stage-hint {
+.stage-hint, .gesture-status {
   position: absolute;
   bottom: 17px;
   left: 50%;
@@ -386,6 +386,7 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
   white-space: nowrap;
   pointer-events: none;
 }
+.gesture-status { z-index: 2; margin: 0; white-space: normal; text-align: center; font-size: clamp(11px, 1.2vw, 15px); }
 .hint-pan { background: var(--accent); }
 .hint-recolor { background: #f1a16d; }
 .hint-subject { background: var(--cyan); }

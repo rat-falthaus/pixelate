@@ -7,7 +7,7 @@ export async function createHandLandmarker(baseUrl: string): Promise<HandLandmar
   return HandLandmarker.createFromOptions(vision, {
     baseOptions: { modelAssetPath: `${assetBase}models/hand_landmarker.task`, delegate: 'CPU' },
     runningMode: 'VIDEO',
-    numHands: 1,
+    numHands: 2,
     minHandDetectionConfidence: 0.6,
     minHandPresenceConfidence: 0.6,
     minTrackingConfidence: 0.6,

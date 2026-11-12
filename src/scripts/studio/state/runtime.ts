@@ -24,6 +24,7 @@ interface RuntimeState {
   subjectDetectorsLoading: Promise<SubjectDetectors> | null;
   lastSubjectFrameAt: number;
   gestureStartedAt: number;
+  gestureArmed: boolean;
   gesturePalmPoint: { x: number; y: number } | null;
   lastGestureFrameAt: number;
   gestureCountdownTimer: number;
@@ -58,6 +59,7 @@ export const runtime: RuntimeState = {
   subjectDetectorsLoading: null,
   lastSubjectFrameAt: 0,
   gestureStartedAt: 0,
+  gestureArmed: true,
   gesturePalmPoint: null,
   lastGestureFrameAt: 0,
   gestureCountdownTimer: 0,
