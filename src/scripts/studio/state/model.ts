@@ -7,7 +7,7 @@ export const config = loadConfig();
 export const model: AppModel = {
   config,
   image: null,
-  subjectRegions: null,
+  subjectMask: null,
   fileName: 'pixel-artwork',
   tileSize: 18,
   freeColorCount: 7,

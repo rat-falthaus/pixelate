@@ -3,7 +3,7 @@ import { elements } from '../dom/elements';
 import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { drawCameraFrame } from './draw-camera-frame';
-import { updateSubjectRegions } from '../recognition/update-subject-regions';
+import { updateSubjectMask } from '../recognition/update-subject-mask';
 import { updateCaptureGesture } from './update-capture-gesture';
 import { stopLiveCamera } from './stop-live-camera';
 import { notify } from '../ui/notify';
@@ -21,8 +21,8 @@ export function updateLiveFrame(timestamp: number): void {
             previousWidth !== runtime.liveFrameCanvas.width ||
             previousHeight !== runtime.liveFrameCanvas.height;
           if (resized || timestamp - runtime.lastSubjectFrameAt >= 350) {
-            updateSubjectRegions(runtime.liveFrameCanvas);
-            runtime.lastSubjectFrameAt = timestamp;
+            updateSubjectMask(runtime.liveFrameCanvas);
+            runtime.lastSubjectFrameAt = performance.now();
           }
           rebuildArtwork(resized);
         }

@@ -1,4 +1,4 @@
-import type { SubjectRegion } from './recognition/types';
+import type { SubjectMask } from './recognition/types';
 
 export type BackgroundMode = 'black' | 'white' | 'transparent';
 export type ToolMode = 'pan' | 'recolor' | 'subject';
@@ -103,7 +103,7 @@ export interface SamplingOptions {
   colorCount: number;
   randomSeed: number;
   manualSubjectMask: Map<string, boolean>;
-  subjectRegions: SubjectRegion[] | null;
+  subjectMask: SubjectMask | null;
 }
 
 export interface ArtworkOptions {
@@ -136,7 +136,7 @@ export interface ArtworkOptions {
 export interface AppModel {
   config: StudioConfig;
   image: ImageSource | null;
-  subjectRegions: SubjectRegion[] | null;
+  subjectMask: SubjectMask | null;
   fileName: string;
   tileSize: number;
   freeColorCount: number;

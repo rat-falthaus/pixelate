@@ -82,7 +82,7 @@ export async function startLiveCamera(): Promise<void> {
     }
     model.liveCameraActive = true;
     model.freezePreview = false;
-    model.subjectRegions = null;
+    model.subjectMask = null;
     runtime.liveCameraStarting = false;
     setImageSource(runtime.liveFrameCanvas, 'live-portrait.png');
     runtime.lastLiveFrameAt = 0;

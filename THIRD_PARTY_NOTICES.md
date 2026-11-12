@@ -27,3 +27,13 @@ Both unmodified models run locally through the bundled MediaPipe Tasks Vision ru
 - License: Apache License 2.0; see [`public/licenses/Apache-2.0.txt`](./public/licenses/Apache-2.0.txt).
 - SHA-256: `0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb`
 - Trained on COCO's common-object categories, including people; not a custom-product classifier.
+
+## MagicTouch silhouette segmentation, float32, version 1
+
+The unmodified model runs locally using MediaPipe's `InteractiveSegmenterLegacy` API, which supports this compact model format. Detected regions supply point prompts; only the model's foreground confidence masks reach the pixel sampler.
+
+- Model source: <https://storage.googleapis.com/mediapipe-models/interactive_segmenter/magic_touch/float32/1/magic_touch.tflite>
+- Model card and license declaration: <https://storage.googleapis.com/mediapipe-assets/Model%20Card%20MagicTouch.pdf>
+- License: Apache License 2.0; see [`public/licenses/Apache-2.0.txt`](./public/licenses/Apache-2.0.txt).
+- SHA-256: `e24338a717c1b7ad8d159666677ef400babb7f33b8ad60c4d96db4ecf694cd25`
+- Approximately 6 MB, bundled and precached with the application; no external model requests or image uploads.

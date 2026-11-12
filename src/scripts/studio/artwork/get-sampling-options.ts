@@ -17,6 +17,6 @@ export function getSamplingOptions(): SamplingOptions {
       : model.freeColorCount,
     randomSeed: model.randomSeed,
     manualSubjectMask: model.manualSubjectMask,
-    subjectRegions: model.subjectRegions,
+    subjectMask: model.subjectMask,
   };
 }

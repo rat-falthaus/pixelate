@@ -5,14 +5,14 @@ import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
 import { ensureSubjectDetectors } from './ensure-subject-detectors';
-import { updateSubjectRegions } from './update-subject-regions';
+import { updateSubjectMask } from './update-subject-mask';
 
 /** Upgrade the current photo to ML-aware sampling without allowing an old upload to replace new input. */
 export async function analyzePhotoSubjects(image: ImageSource): Promise<void> {
   try {
     await ensureSubjectDetectors();
     if (model.image !== image || model.liveCameraActive || runtime.previewFreeze) return;
-    updateSubjectRegions(image);
+    updateSubjectMask(image);
     rebuildArtwork();
   } catch (error) {
     console.error('Local subject recognition could not be initialized.', error);

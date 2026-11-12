@@ -5,7 +5,7 @@ import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { updateLiveUi } from '../ui/update-live-ui';
 import { drawCameraFrame } from './draw-camera-frame';
-import { updateSubjectRegions } from '../recognition/update-subject-regions';
+import { updateSubjectMask } from '../recognition/update-subject-mask';
 
 /** Cancel live capture resources, optionally retaining a higher-resolution frozen frame. */
 export function stopLiveCamera(freeze: boolean): void {
@@ -33,7 +33,7 @@ export function stopLiveCamera(freeze: boolean): void {
   runtime.liveFrameCanvas = null;
 
   if (frozenFrame) {
-    updateSubjectRegions(frozenFrame);
+    updateSubjectMask(frozenFrame);
     setImageSource(frozenFrame, `portrait-${new Date().toISOString().slice(0, 10)}.png`);
   } else if (!freeze) {
     model.image = null;

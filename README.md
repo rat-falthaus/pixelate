@@ -17,7 +17,7 @@ Create a production build with `npm run build`. The app uses Astro and TypeScrip
 
 The project is configured for `https://rat-falthaus.github.io/pixelate/`. Pushing to `main` runs [the Pages workflow](./.github/workflows/pages.yml), which checks, builds, and deploys the static site. Enable GitHub Pages with **GitHub Actions** as the build and deployment source in repository settings.
 
-The build bundles the recognition runtime, its WASM files, and the hand, face, and common-object models, then precaches the static output in a service worker. Open the hosted app once while online and allow the initial cache installation to finish before taking the device offline. A first visit cannot work without a network connection because the browser must initially fetch the site. After installation, app navigation and bundled processing assets are served locally. Browser camera access still requires a secure context (GitHub Pages HTTPS or localhost).
+The build bundles the recognition runtime, its WASM files, and the hand, face, common-object, and silhouette-segmentation models, then precaches the static output in a service worker. Open the hosted app once while online and allow the initial cache installation to finish before taking the device offline. A first visit cannot work without a network connection because the browser must initially fetch the site. After installation, app navigation and bundled processing assets are served locally. Browser camera access still requires a secure context (GitHub Pages HTTPS or localhost).
 
 ## Fair / kiosk mode
 
@@ -46,12 +46,12 @@ An uploaded logo replaces typed brand identity in both toolbars and the artwork.
 ## How the pixel rules work
 
 1. The source image is sampled into a grid of square cells. The longest grid edge is capped to keep large uploads responsive.
-2. MediaPipe FaceDetector (BlazeFace) and ObjectDetector (EfficientDet-Lite0, COCO common-object classes) identify faces, people, and familiar objects locally. Normalized detection regions follow the same cropped/mirrored image used by the sampler, and are refreshed during live capture. Subject focus filters region confidence; keep/background brush overrides take precedence.
+2. MediaPipe FaceDetector (BlazeFace) and ObjectDetector (EfficientDet-Lite0, COCO common-object classes) locate faces, people, and familiar objects locally. Their bounds only guide a bundled MagicTouch segmenter: **foreground follows learned silhouettes, not detection rectangles**. Detection and segmentation use the same cropped/mirrored snapshot and refresh during live capture. Multiple object masks are combined without filling their bounding boxes or internal gaps. Subject focus adjusts silhouette confidence within a bounded range; keep/background brush overrides take precedence.
 3. Recognized subjects use a gentler contrast curve and retain shadow/highlight cells so facial/object detail is not cut away. Background cells are probabilistically thinned and their palette colors scattered using a seeded random sequence. If model initialization fails, an explicit warning identifies the heuristic fallback: border-color/edge/saturation saliency with the original negative-space thresholds.
 4. Visible cell colors are grouped into luminance-sorted clusters with deterministic farthest-point initialization and iterative refinement. Brand-locked mode maps those tones to the active palette; free mode uses the sampled colors.
 5. One compound SVG path is emitted per used color. Optional hairline gaps, a solid or transparent canvas background, manual tile edits, a grid-snapped message, and a generic brand signature are applied at export time.
 
-Detection uses bounding regions, not pixel-perfect silhouette segmentation or face identity recognition. Background inside a detected box may also be retained. Unsupported custom products are not guaranteed to be recognized; use the mask brush to correct regions. Empty detections clear the old foreground mask rather than leaving stale subjects on screen. A transparent export does not embed an opaque canvas background.
+Segmentation estimates object shapes; it is not pixel-perfect, especially for fine hair, thin features, occlusions, or low-contrast boundaries. A prompt that selects surrounding background is rejected and retried at another location inside the detected region; if no outline is found, the UI says so instead of filling the box. Unsupported custom products are not guaranteed to be recognized; use the mask brush to correct outlines. There is no face identity recognition. Empty detections clear the old foreground mask rather than leaving stale subjects on screen. A transparent export does not embed an opaque canvas background.
 
 ## Project map
 
@@ -62,7 +62,7 @@ Detection uses bounding regions, not pixel-perfect silhouette segmentation or fa
 - `src/lib/config/` owns defaults, validation, and local settings persistence.
 - `src/lib/sampling/` handles grid sampling, saliency, and palette quantization.
 - `src/lib/gesture/` loads the bundled hand-landmark model and recognizes the open-palm capture gesture.
-- `src/lib/recognition/` loads bundled face/object models, normalizes detection bounds, and builds subject confidence maps.
+- `src/lib/recognition/` loads bundled detection/segmentation models, extracts object silhouettes, and resamples their foreground confidence for the tile grid.
 - `src/lib/local-store/` stores brand assets and gallery freezes in IndexedDB.
 - `src/lib/svg/` generates standalone SVG markup and its grid-aligned overlays.
 - `src/scripts/studio.ts` is only the startup entry point and top-level failure notification.
@@ -84,7 +84,7 @@ Each implementation file exports one named function, with a matching kebab-case 
 | `studio/events/`      | Feature-specific listener registration and stage pointer handlers          |
 | `studio/gallery/`     | Saved portrait cards, selection, preview, sharing, and thumbnail URLs      |
 | `studio/photo/`       | Image decoding, file validation, and active image URL ownership            |
-| `studio/recognition/` | Shared local model initialization, live region updates, and photo analysis |
+| `studio/recognition/` | Shared local model initialization, live silhouette updates, and photo analysis |
 | `studio/sharing/`     | PNG conversion, SVG exports, clipboard, and native sharing                 |
 | `studio/state/`       | Artwork/configuration model and transient browser resources                |
 | `studio/ui/`          | Initialization, notifications, kiosk status, and workspace permissions     |

@@ -1,4 +1,9 @@
-import { FaceDetector, FilesetResolver, ObjectDetector } from '@mediapipe/tasks-vision';
+import {
+  FaceDetector,
+  FilesetResolver,
+  InteractiveSegmenterLegacy,
+  ObjectDetector,
+} from '@mediapipe/tasks-vision';
 import type { SubjectDetectors } from './types';
 
 /** Load pinned, same-origin CPU models; no CDN or remote inference is involved. */
@@ -20,7 +25,17 @@ export async function createSubjectDetectors(baseUrl: string): Promise<SubjectDe
       runningMode: 'IMAGE',
       minDetectionConfidence: 0.5,
     });
-    return { faces, objects };
+    try {
+      const segmenter = await InteractiveSegmenterLegacy.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: `${base}models/magic_touch.tflite`, delegate: 'CPU' },
+        outputConfidenceMasks: true,
+        outputCategoryMask: false,
+      });
+      return { faces, objects, segmenter };
+    } catch (error) {
+      faces.close();
+      throw error;
+    }
   } catch (error) {
     objects.close();
     throw error;

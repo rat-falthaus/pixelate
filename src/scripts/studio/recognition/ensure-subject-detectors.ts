@@ -7,7 +7,8 @@ import { runtime } from '../state/runtime';
 export async function ensureSubjectDetectors(): Promise<SubjectDetectors> {
   if (runtime.subjectDetectors) return runtime.subjectDetectors;
   if (!runtime.subjectDetectorsLoading) {
-    getElement('recognition-status').textContent = 'Loading local face and object recognition...';
+    getElement('recognition-status').textContent =
+      'Loading local detection and silhouette models...';
     runtime.subjectDetectorsLoading = createSubjectDetectors(import.meta.env.BASE_URL)
       .then((detectors) => {
         runtime.subjectDetectors = detectors;

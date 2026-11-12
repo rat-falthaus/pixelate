@@ -1,4 +1,5 @@
 export { createSubjectDetectors } from './recognition/create-subject-detectors';
 export { detectSubjectRegions } from './recognition/detect-subject-regions';
-export { createRegionSaliency } from './recognition/create-region-saliency';
-export type { SubjectDetectors, SubjectRegion } from './recognition/types';
+export { analyzeSubjectShapes } from './recognition/analyze-subject-shapes';
+export { createMaskSaliency } from './recognition/create-mask-saliency';
+export type { SubjectDetectors, SubjectMask, SubjectRegion } from './recognition/types';

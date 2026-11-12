@@ -4,7 +4,7 @@ import { applyContrast } from './apply-contrast';
 import { createSaliencyMap } from './create-saliency-map';
 import { quantize } from './quantize';
 import { MAX_GRID_EDGE } from './state';
-import { createRegionSaliency } from '../recognition/create-region-saliency';
+import { createMaskSaliency } from '../recognition/create-mask-saliency';
 
 /**
  * Samples a browser-decoded image into square cells, estimates foreground
@@ -46,15 +46,18 @@ export function sampleImage(image: ImageSource, options: SamplingOptions): Sampl
     brightness[index] = luminance({ r: red[index], g: green[index], b: blue[index] });
   }
 
-  const recognized = options.subjectRegions !== null;
+  const recognized = options.subjectMask !== null;
   const saliency =
-    options.subjectRegions === null
+    options.subjectMask === null
       ? createSaliencyMap(red, green, blue, brightness, cols, rows)
-      : createRegionSaliency(options.subjectRegions, cols, rows);
+      : createMaskSaliency(options.subjectMask, cols, rows);
   const random = seededRandom(options.randomSeed);
   const minBrightness = (options.darkCutoffPercent / 100) * 255;
   const maxBrightness = (options.lightCutoffPercent / 100) * 255;
-  const subjectCutoff = 1 - options.subjectThreshold / 100;
+  // Even maximum focus must reject low-confidence background probabilities.
+  const subjectCutoff = recognized
+    ? 0.8 - options.subjectThreshold * 0.006
+    : 1 - options.subjectThreshold / 100;
   const contrastFactor = 1 + (options.subjectContrast / 100) * (recognized ? 0.6 : 2.4);
   const cells: PhotoCell[] = [];
 

@@ -28,7 +28,7 @@ export async function loadImage(
   if (image.naturalWidth * image.naturalHeight > 40_000_000) {
     throw new Error('This image is larger than 40 megapixels. Choose a smaller image.');
   }
-  model.subjectRegions = null;
+  model.subjectMask = null;
   setImageSource(image, fileName, sourceUrl ?? source);
   void analyzePhotoSubjects(image);
 }
