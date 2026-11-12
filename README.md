@@ -50,13 +50,42 @@ Foreground detection is a lightweight heuristic, not machine-learning segmentati
 - `src/pages/index.astro` composes the single-page application from Astro components.
 - `src/components/` contains the header, accessible control panel, artwork viewport, and native dialogs.
 - `src/lib/types.ts` defines the app and image-processing data contracts.
-- `src/lib/config.ts` owns defaults, validation, and local persistence.
-- `src/lib/sampling.ts` handles grid sampling, saliency, and palette quantization.
-- `src/lib/gesture.ts` loads the bundled hand-landmark model and recognizes the open-palm capture gesture.
-- `src/lib/local-store.ts` stores brand assets and gallery freezes in IndexedDB.
-- `src/lib/svg.ts` generates safe, standalone SVG markup.
-- `src/scripts/studio.ts` binds browser events, manages the camera and local sharing flow, and connects the interface to the domain modules.
+- `src/lib/{color,config,gesture,local-store,sampling,svg}.ts` are stable public APIs. Each re-exports single-function implementations from its matching directory, so callers do not need to know internal file layouts.
+- `src/lib/config/` owns defaults, validation, and local settings persistence.
+- `src/lib/sampling/` handles grid sampling, saliency, and palette quantization.
+- `src/lib/gesture/` loads the bundled hand-landmark model and recognizes the open-palm capture gesture.
+- `src/lib/local-store/` stores brand assets and gallery freezes in IndexedDB.
+- `src/lib/svg/` generates standalone SVG markup and its grid-aligned overlays.
+- `src/scripts/studio.ts` is only the startup entry point and top-level failure notification.
+- `src/scripts/studio/` contains browser actions, feature event binders, DOM bindings, and explicit shared state.
 - `scripts/build-offline.mjs` generates the content-versioned service worker and precache list.
 - `src/styles/studio.css` is the complete local styling layer.
+
+### Studio module structure
+
+Each implementation file exports one named function, with a matching kebab-case filename and a JSDoc description of its responsibility. Short event callbacks remain beside the function that owns them; substantial pointer handlers have their own files. Data-only modules contain shared types, settings, or state rather than functions.
+
+| Directory | Responsibility |
+| --- | --- |
+| `studio/admin/` | PIN gate, admin form application, palettes, and settings persistence |
+| `studio/artwork/` | Rendering, sampling inputs, color mapping, brushes, and undo |
+| `studio/branding/` | Logo validation/rasterization, font loading, and local brand assets |
+| `studio/camera/` | Camera streams, live rendering, gestures, countdown, and freeze lifecycle |
+| `studio/dom/` | Required-element lookup and the typed DOM element registry |
+| `studio/events/` | Feature-specific listener registration and stage pointer handlers |
+| `studio/gallery/` | Saved portrait cards, selection, preview, sharing, and thumbnail URLs |
+| `studio/photo/` | Image decoding, file validation, and active image URL ownership |
+| `studio/sharing/` | PNG conversion, SVG exports, clipboard, and native sharing |
+| `studio/state/` | Artwork/configuration model and transient browser resources |
+| `studio/ui/` | Initialization, notifications, kiosk status, and workspace permissions |
+| `studio/viewport/` | Pan/zoom transforms, artboard fitting, and drawer visibility |
+
+Initialization binds the events once, restores local assets/gallery data, and applies the workspace controls. Event binders call actions directly; actions use domain APIs for processing and persistence. The state and DOM modules do not import actions, preventing startup dependencies from running UI behavior before the page is initialized.
+
+`state/model.ts` owns the editable artwork and configuration. `state/runtime.ts` owns browser resources such as streams, canvases, animation/timer handles, selection IDs, and object URLs; related lifecycle functions remain responsible for releasing those resources. Domain state such as the IndexedDB connection cache stays within its library directory.
+
+To change behavior, start at the relevant feature binder, then follow its explicitly imported action. Add new substantial actions as documented single-function files, reuse the existing model/DOM registry, and register new controls in the appropriate binder rather than expanding the startup entry point. Keep library helpers independent of browser UI modules.
+
+After changes, run `npm run check`, `npm run lint`, and `npm run build`. The check command generates Astro environment types before invoking TypeScript, so it also works on a clean checkout.
 
 See [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) for bundled model/runtime attribution.
