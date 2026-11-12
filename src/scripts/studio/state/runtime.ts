@@ -5,6 +5,7 @@ import type { ArtworkSnapshot } from "../../../lib/types";
 
 /** Mutable browser resources and interaction state, shared by studio actions. */
 interface RuntimeState {
+  publicKioskMode: boolean;
   activeImageUrl: string | null;
   cameraStream: MediaStream | null;
   cameraRequest: number;
@@ -40,6 +41,7 @@ interface RuntimeState {
 }
 
 export const runtime: RuntimeState = {
+  publicKioskMode: false,
   activeImageUrl: null,
   cameraStream: null,
   cameraRequest: 0,

@@ -3,6 +3,7 @@ import { elements } from "../dom/elements";
 import { model } from "../state/model";
 import { renderArtwork } from "./render-artwork";
 import { renderBrushSwatches } from "./render-brush-swatches";
+import { isKioskMode } from "../state/is-kiosk-mode";
 
 /** Rebuild photo-tone mapping controls and refresh the available paint swatches. */
 export function renderMapping(): void {
@@ -11,10 +12,13 @@ export function renderMapping(): void {
     ? `${theme.colors.length} colors`
     : `${model.freeColorCount} free`;
   elements.mappingList.replaceChildren();
-  elements.mappingControls.classList.toggle("is-hidden", !model.config.enforceTheme);
+  elements.mappingControls.classList.toggle(
+    "is-hidden",
+    !model.config.enforceTheme || (isKioskMode() && !model.config.permissions.mapping),
+  );
   elements.freePaletteControls.classList.toggle(
     "is-hidden",
-    model.config.enforceTheme || model.config.fairMode,
+    model.config.enforceTheme || isKioskMode(),
   );
 
   if (model.config.enforceTheme) {

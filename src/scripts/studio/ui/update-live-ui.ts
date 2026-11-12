@@ -3,11 +3,12 @@ import { renderBrandIdentity } from "../branding/render-brand-identity";
 import { getElement } from "../dom/get-element";
 import { model } from "../state/model";
 import { runtime } from "../state/runtime";
-import { isPositionLocked } from "../../../lib/config";
+import { isOverlayPositionLocked } from "../state/is-overlay-position-locked";
+import { isKioskMode } from "../state/is-kiosk-mode";
 
 /** Synchronize camera status, empty-state visibility, and visitor position locks. */
 export function updateLiveUi(): void {
-  const fairMode = model.config.fairMode;
+  const fairMode = isKioskMode();
   const hasArtwork = Boolean(model.image);
   renderBrandIdentity();
   elements.emptyState.classList.toggle("is-hidden", hasArtwork || fairMode);
@@ -20,6 +21,9 @@ export function updateLiveUi(): void {
     : hasArtwork
       ? "Portrait ready"
       : "Fair portrait studio";
+  if (fairMode) {
+    elements.liveStatus.textContent = `${model.config.fairMode ? "Admin kiosk" : "Kiosk preview"} · ${elements.liveStatus.textContent}`;
+  }
   getElement("live-camera-label").textContent = model.liveCameraActive
     ? "Snap & freeze"
     : "New portrait";
@@ -54,20 +58,20 @@ export function updateLiveUi(): void {
       : "Gesture capture unavailable. Use Snap & freeze.";
   getElement("logo-section").classList.toggle(
     "is-hidden",
-    isPositionLocked(model.config, "logo") || (!model.logoDataUrl && !model.config.brandSignature),
+    isOverlayPositionLocked("logo") || (!model.logoDataUrl && !model.config.brandSignature),
   );
   getElement("drawer-open").setAttribute(
     "aria-expanded",
     String(document.body.classList.contains("drawer-open")),
   );
   document.querySelectorAll<HTMLButtonElement>("[data-position]").forEach((button) => {
-    button.disabled = isPositionLocked(model.config, "message");
+    button.disabled = isOverlayPositionLocked("message");
     const selected = button.dataset.position === model.messagePosition;
     button.classList.toggle("is-selected", selected);
     button.setAttribute("aria-pressed", String(selected));
   });
   document.querySelectorAll<HTMLButtonElement>("[data-logo-position]").forEach((button) => {
-    button.disabled = isPositionLocked(model.config, "logo");
+    button.disabled = isOverlayPositionLocked("logo");
     button.classList.toggle(
       "is-selected",
       button.dataset.logoPosition === model.config.logoPosition,

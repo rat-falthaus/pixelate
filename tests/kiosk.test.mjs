@@ -295,7 +295,7 @@ test("uploaded logo replaces the text identity, and text fallback works without 
     manualTileOverrides: new Map(),
     background: "black",
     includeBackground: true,
-    hairlines: false,
+    tileSpacingPercent: 0,
     backgroundScatter: 0,
     randomSeed: 1,
     messageEnabled: false,
@@ -337,6 +337,62 @@ test("camera selection survives normalization and older configurations default t
   assert.equal(normalizeConfig({}).cameraDeviceId, "");
 });
 
+test("tile spacing migrates legacy hairlines and keeps saved percentages within bounds", () => {
+  assert.equal(normalizeConfig({ hairlines: false }).tileSpacingPercent, 0);
+  assert.equal(normalizeConfig({ hairlines: true }).tileSpacingPercent, 5);
+  assert.equal(normalizeConfig({ hairlines: true, tileSpacingPercent: 0 }).tileSpacingPercent, 0);
+  assert.equal(normalizeConfig({ tileSpacingPercent: 30 }).tileSpacingPercent, 30);
+  assert.equal(normalizeConfig({ tileSpacingPercent: -10 }).tileSpacingPercent, 0);
+  assert.equal(normalizeConfig({ tileSpacingPercent: 100 }).tileSpacingPercent, 50);
+  assert.equal(normalizeConfig({ tileSpacingPercent: NaN }).tileSpacingPercent, 5);
+});
+
+test("spacing renders proportional gutters and zero-gap edges for sampled and painted tiles", () => {
+  const options = {
+    grid: {
+      cols: 3,
+      rows: 1,
+      cells: [0, 1].map((col) => ({ col, row: 0, isSubject: true, clusterIndex: 0 })),
+      clusters: [{ hex: "#FFFFFF" }],
+      saliency: new Float32Array(),
+    },
+    tileSize: 20,
+    tileSpacingPercent: 0,
+    theme: { id: "test", name: "Test", colors: ["#FFFFFF"] },
+    enforceTheme: true,
+    clusterToTheme: [0],
+    manualTileOverrides: new Map([["2,0", "#FFFFFF"]]),
+    background: "transparent",
+    includeBackground: false,
+    backgroundScatter: 0,
+    randomSeed: 1,
+    messageEnabled: false,
+    message: "",
+    messagePosition: "upper",
+    messageOrigin: null,
+    messageScale: 100,
+    brandSignature: "",
+    showBadge: false,
+    logoDataUrl: null,
+    logoAspectRatio: 1,
+    logoPosition: "lower",
+    logoOrigin: null,
+    fontFamily: "Arial",
+    fontDataUri: null,
+  };
+  const joined = createArtworkSvg(options);
+  assert.equal(joined.tileCount, 3);
+  assert.match(joined.markup, /d="M0 0h20v20h-20ZM20 0h20v20h-20ZM40 0h20v20h-20Z"/);
+  assert.match(joined.markup, /shape-rendering="crispEdges"/);
+  const spaced = createArtworkSvg({ ...options, tileSpacingPercent: 20 });
+  assert.equal(spaced.tileCount, 3);
+  assert.match(spaced.markup, /d="M2 2h16v16h-16ZM22 2h16v16h-16ZM42 2h16v16h-16Z"/);
+  assert.match(
+    createArtworkSvg({ ...options, tileSize: 4, tileSpacingPercent: 50 }).markup,
+    /d="M1 1h2v2h-2ZM5 1h2v2h-2ZM9 1h2v2h-2Z"/,
+  );
+});
+
 test("free-palette background scatter preserves subject colors", () => {
   const options = {
     grid: {
@@ -358,7 +414,7 @@ test("free-palette background scatter preserves subject colors", () => {
     manualTileOverrides: new Map(),
     background: "transparent",
     includeBackground: false,
-    hairlines: false,
+    tileSpacingPercent: 0,
     randomSeed: 1,
     messageEnabled: false,
     message: "",
@@ -381,7 +437,7 @@ test("free-palette background scatter preserves subject colors", () => {
   assert.match(scattered.markup, /fill="#111111" d="M0 0h18v18h-18Z/);
 });
 
-test("studio preserves positioning permissions, camera lifecycle, and gesture countdown state", async () => {
+test("studio preserves positioning permissions, camera lifecycle, and gesture countdown state", async (t) => {
   const previous = {
     document: globalThis.document,
     localStorage: globalThis.localStorage,
@@ -391,12 +447,14 @@ test("studio preserves positioning permissions, camera lifecycle, and gesture co
     HTMLMediaElement: globalThis.HTMLMediaElement,
   };
   const nodes = new Map();
+  const documentListeners = new Map();
   const makeElement = () => {
     const classes = new Set();
     return {
       style: {},
       dataset: {},
       attributes: new Map(),
+      listeners: new Map(),
       classList: {
         add: (...names) => names.forEach((name) => classes.add(name)),
         remove: (...names) => names.forEach((name) => classes.delete(name)),
@@ -414,7 +472,18 @@ test("studio preserves positioning permissions, camera lifecycle, and gesture co
       removeAttribute() {},
       replaceChildren() {},
       append() {},
-      addEventListener() {},
+      showModal() {
+        this.open = true;
+      },
+      close() {
+        this.open = false;
+      },
+      focus() {},
+      querySelector: () => null,
+      getBoundingClientRect: () => ({ width: 0, height: 0 }),
+      addEventListener(name, callback) {
+        this.listeners.set(name, callback);
+      },
     };
   };
   const messageButtons = ["upper", "lower"].map((position) => {
@@ -433,6 +502,9 @@ test("studio preserves positioning permissions, camera lifecycle, and gesture co
   let nextInterval = 1;
   globalThis.document = {
     body: makeElement(),
+    addEventListener(name, callback) {
+      documentListeners.set(name, callback);
+    },
     getElementById(id) {
       if (!nodes.has(id)) nodes.set(id, makeElement());
       return nodes.get(id);
@@ -583,6 +655,170 @@ test("studio preserves positioning permissions, camera lifecycle, and gesture co
       updateCaptureGesture(5900);
       assert.ok(runtime.gestureCountdownTimer > 0, "lowering the hand rearms gesture capture");
       stopLiveCamera(false);
+
+      await t.test(
+        "the spacing slider updates artwork and its label without resampling",
+        async () => {
+          const { bindCanvasEvents } =
+            await import("../src/scripts/studio/events/bind-canvas-events.ts");
+          model.image = { width: 40, height: 20 };
+          model.gridCols = 2;
+          model.gridRows = 1;
+          model.tileSize = 20;
+          model.messageEnabled = false;
+          model.showBadge = false;
+          const cells = [0, 1].map((col) => ({ col, row: 0, isSubject: true, clusterIndex: 0 }));
+          model.cells = cells;
+          bindCanvasEvents();
+          const slider = nodes.get("tile-spacing");
+          slider.value = "0";
+          slider.listeners.get("input")();
+          assert.equal(model.tileSpacingPercent, 0);
+          assert.equal(nodes.get("tile-spacing-value").textContent, "0%");
+          assert.match(model.currentSvg, /d="M0 0h20v20h-20ZM20 0h20v20h-20Z"/);
+          slider.value = "50";
+          slider.listeners.get("input")();
+          assert.equal(model.tileSpacingPercent, 50);
+          assert.equal(nodes.get("tile-spacing-value").textContent, "50%");
+          assert.match(model.currentSvg, /d="M5 5h10v10h-10ZM25 5h10v10h-10Z"/);
+          assert.equal(model.cells, cells);
+        },
+      );
+
+      await t.test(
+        "public fullscreen toggles preserve normal mode and camera, and follow Escape",
+        async () => {
+          const { bindViewportEvents } =
+            await import("../src/scripts/studio/events/bind-viewport-events.ts");
+          const { toggleFullscreen } =
+            await import("../src/scripts/studio/viewport/toggle-fullscreen.ts");
+          model.config.fairMode = false;
+          model.liveCameraActive = true;
+          const stream = { getTracks: () => [{ stop: () => stopped++ }] };
+          runtime.liveCameraStream = stream;
+          const previousStops = stopped;
+          document.fullscreenElement = null;
+          bindViewportEvents();
+          const button = nodes.get("studio-fullscreen");
+          const label = nodes.get("studio-fullscreen-label");
+          assert.equal(typeof button.listeners.get("click"), "function");
+          assert.equal(label.textContent, "Fullscreen");
+          await toggleFullscreen();
+          assert.ok(document.fullscreenElement);
+          assert.equal(label.textContent, "Exit fullscreen");
+          assert.equal(button.attributes.get("aria-pressed"), "true");
+          assert.equal(model.config.fairMode, false);
+          assert.equal(model.liveCameraActive, true);
+          assert.equal(runtime.liveCameraStream, stream);
+          assert.equal(stopped, previousStops);
+          await toggleFullscreen();
+          assert.equal(document.fullscreenElement, null);
+          assert.equal(label.textContent, "Fullscreen");
+          await toggleFullscreen();
+          document.fullscreenElement = null;
+          documentListeners.get("fullscreenchange")();
+          assert.equal(label.textContent, "Fullscreen");
+          assert.equal(button.attributes.get("aria-pressed"), "false");
+        },
+      );
+
+      await t.test(
+        "unavailable and blocked fullscreen show feedback without claiming success",
+        async (t) => {
+          const { toggleFullscreen } =
+            await import("../src/scripts/studio/viewport/toggle-fullscreen.ts");
+          const requestFullscreen = document.documentElement.requestFullscreen;
+          const errors = t.mock.method(console, "error", () => {});
+          try {
+            document.documentElement.requestFullscreen = undefined;
+            await toggleFullscreen();
+            assert.match(nodes.get("toast").textContent, /unavailable/);
+            document.documentElement.requestFullscreen = async () => {
+              throw new Error("Fullscreen blocked");
+            };
+            await toggleFullscreen();
+            assert.equal(errors.mock.callCount(), 1);
+            assert.match(nodes.get("toast").textContent, /Could not enter fullscreen/);
+            assert.equal(nodes.get("studio-fullscreen-label").textContent, "Fullscreen");
+            assert.equal(nodes.get("studio-fullscreen").attributes.get("aria-pressed"), "false");
+          } finally {
+            document.documentElement.requestFullscreen = requestFullscreen;
+          }
+        },
+      );
+      await t.test(
+        "public kiosk previews never persist and exit by button, Escape, or browser exit",
+        async () => {
+          const { enterPublicKiosk } =
+            await import("../src/scripts/studio/viewport/enter-public-kiosk.ts");
+          const { leavePublicKiosk } =
+            await import("../src/scripts/studio/viewport/leave-public-kiosk.ts");
+          const { handleEscapeKey } =
+            await import("../src/scripts/studio/events/handle-escape-key.ts");
+          const { handleFullscreenChange } =
+            await import("../src/scripts/studio/events/handle-fullscreen-change.ts");
+          model.image = null;
+          model.config.fairMode = false;
+          document.fullscreenElement = null;
+          let writes = 0;
+          localStorage.setItem = () => {
+            writes++;
+          };
+          const stream = runtime.liveCameraStream;
+          await enterPublicKiosk();
+          handleFullscreenChange();
+          assert.equal(runtime.publicKioskMode, true);
+          assert.equal(model.config.fairMode, false);
+          assert.equal(document.body.classList.contains("fair-mode"), true);
+          assert.equal(nodes.get("live-leave-kiosk").classList.contains("is-hidden"), false);
+          leavePublicKiosk();
+          assert.equal(runtime.publicKioskMode, false);
+          assert.equal(document.body.classList.contains("fair-mode"), false);
+          assert.equal(document.fullscreenElement, null);
+          await enterPublicKiosk();
+          handleEscapeKey({ key: "Escape", preventDefault() {} });
+          assert.equal(runtime.publicKioskMode, false);
+          await enterPublicKiosk();
+          document.fullscreenElement = null;
+          handleFullscreenChange();
+          assert.equal(runtime.publicKioskMode, false);
+          assert.equal(model.config.fairMode, false);
+          assert.equal(runtime.liveCameraStream, stream);
+          assert.equal(model.liveCameraActive, true);
+          assert.equal(writes, 0);
+        },
+      );
+
+      await t.test(
+        "admin kiosks keep their lock after Escape and reject public exit controls",
+        async () => {
+          const { leavePublicKiosk } =
+            await import("../src/scripts/studio/viewport/leave-public-kiosk.ts");
+          const { handleEscapeKey } =
+            await import("../src/scripts/studio/events/handle-escape-key.ts");
+          const { handleFullscreenChange } =
+            await import("../src/scripts/studio/events/handle-fullscreen-change.ts");
+          const { toggleFullscreen } =
+            await import("../src/scripts/studio/viewport/toggle-fullscreen.ts");
+          model.config.fairMode = true;
+          applyWorkspaceSettings();
+          handleEscapeKey({ key: "Escape", preventDefault() {} });
+          leavePublicKiosk();
+          assert.equal(model.config.fairMode, true);
+          assert.equal(document.body.classList.contains("fair-mode"), true);
+          document.fullscreenElement = null;
+          handleFullscreenChange();
+          assert.equal(model.config.fairMode, true);
+          assert.equal(document.body.classList.contains("fair-mode"), true);
+          assert.equal(nodes.get("live-leave-kiosk").classList.contains("is-hidden"), true);
+          assert.equal(nodes.get("live-fullscreen").classList.contains("is-hidden"), false);
+          document.fullscreenElement = {};
+          await toggleFullscreen();
+          assert.ok(document.fullscreenElement);
+          assert.equal(nodes.get("pin-dialog").open, true);
+          nodes.get("pin-dialog").close();
+        },
+      );
     } finally {
       Object.assign(model, savedModel);
       Object.assign(runtime, savedRuntime);

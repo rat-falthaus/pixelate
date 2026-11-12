@@ -20,7 +20,7 @@ export const DEFAULT_PERMISSIONS: VisitorPermissions = {
 export const DEFAULT_CONFIG: StudioConfig = {
   adminPin: "1234",
   applicationTitle: "Pixel Studio",
-  brandSignature: "YOUR BRAND",
+  brandSignature: "pixelate",
   defaultMessage: "MAKE\nSOMETHING\nMATTER.",
   enforceTheme: true,
   fairMode: false,
@@ -36,7 +36,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
   galleryClearDelaySeconds: 0,
   darkCutoffPercent: 20,
   lightCutoffPercent: 95,
-  hairlines: true,
+  tileSpacingPercent: 5,
   permissions: { ...DEFAULT_PERMISSIONS },
   activeThemeId: DEFAULT_THEME.id,
   themes: [{ ...DEFAULT_THEME, colors: [...DEFAULT_THEME.colors] }],

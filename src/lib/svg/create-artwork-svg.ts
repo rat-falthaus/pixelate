@@ -25,7 +25,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     manualTileOverrides,
     background,
     includeBackground,
-    hairlines,
+    tileSpacingPercent,
     backgroundScatter,
     randomSeed,
     messageEnabled,
@@ -67,7 +67,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
       : null;
   const pathsByColor = new Map<string, string[]>();
   const occupied = new Set<string>();
-  const gap = hairlines && tileSize >= 8 ? 0.5 : 0;
+  const gap = Number(((tileSize * tileSpacingPercent) / 200).toFixed(2));
   const drawnTileSize = Number((tileSize - gap * 2).toFixed(2));
   const random = seededRandom(randomSeed + 991);
   let tileCount = 0;
@@ -120,7 +120,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     colorPathIndex += 1;
     tileCount += commands.length;
     pathMarkup.push(
-      `<path id="tile-color-${colorPathIndex}" fill="${color}" d="${commands.join("")}"/>`,
+      `<path id="tile-color-${colorPathIndex}" fill="${color}" d="${commands.join("")}"${gap === 0 ? ' shape-rendering="crispEdges"' : ""}/>`,
     );
   }
 

@@ -25,7 +25,7 @@ export function renderArtwork(): void {
     manualTileOverrides: model.manualTileOverrides,
     background: model.background,
     includeBackground: model.includeBackground,
-    hairlines: model.config.hairlines,
+    tileSpacingPercent: model.tileSpacingPercent,
     backgroundScatter: model.backgroundScatter,
     randomSeed: model.randomSeed,
     messageEnabled: model.messageEnabled,

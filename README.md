@@ -21,7 +21,13 @@ The build bundles the recognition runtime, its WASM files, and the hand, face, c
 
 ## Fair / kiosk mode
 
-Live camera and capturing are also available in the normal studio: use **Start live camera** above the artwork, then **Snap & freeze** to save a portrait to the gallery. The same three-second preview and gesture capture work in both modes. **Stop live** releases the camera and keeps the current portrait; **Gallery** opens saved captures. The normal studio keeps its editing layout and does not request fullscreen. The existing **Camera** action still offers a one-shot photo dialog. Opening it releases an active live stream first.
+The initial identity is **pixelate** until a brand signature or logo is configured. The normal toolbar has local SVG-icon **Fullscreen** and **Kiosk mode** buttons; neither requires the admin PIN.
+
+**Public kiosk preview:** the toolbar's **Kiosk mode** button temporarily shows the fair layout and requests fullscreen. **Leave kiosk mode**, Escape, or exiting browser fullscreen returns to the normal studio without restarting the camera. This preview is not saved and does not change the admin checkbox.
+
+**Admin-locked kiosk:** unlock settings with the PIN, enable **Fair / kiosk mode**, and apply. This setting persists across reloads. Public exit buttons are hidden, and Escape cannot leave the app's kiosk layout. To leave, open **Admin settings**, enter the correct PIN, disable the checkbox, and apply. The fullscreen-entry button remains available if browser fullscreen is exited.
+
+Live camera and capturing are also available in the normal studio: use **Start live camera** above the artwork, then **Snap & freeze** to save a portrait to the gallery. The same three-second preview and gesture capture work in both modes. **Stop live** releases the camera and keeps the current portrait; **Gallery** opens saved captures. The normal studio keeps its editing layout and does not enter fullscreen automatically. Use **Fullscreen** / **Exit fullscreen** above the artwork without an admin PIN; Escape also exits fullscreen. This does not switch to fair mode or restart the camera. The existing **Camera** action still offers a one-shot photo dialog. Opening it releases an active live stream first.
 
 Fair mode presents a camera mosaic fitted to the entire screen. Start the camera, then hold an open palm steady to trigger the translucent 3-2-1 countdown; the captured portrait is previewed for three seconds before live mode resumes. The capture button remains available when gesture recognition is unavailable. Each freeze is saved locally in the gallery, where visitors can select and share multiple images, preview one, or drag it onto the stage. On supported devices, the share sheet sends PNG files; otherwise selected gallery images can be saved locally. Successfully shared selections are removed from local storage after the admin-configured delay.
 
@@ -30,6 +36,8 @@ The live view shows whether hand recognition is loading, ready, or unavailable. 
 The admin camera selector lists built-in and external video inputs; device names appear after camera permission has been granted. Apply settings to restart an active stream on the selected input. A missing selected device is reported rather than silently replaced. Live rendering starts before recognition models finish initializing, and a recognition failure does not stop camera rendering or manual capture.
 
 Images always use centered **cover** framing: they fill the available stage without distortion, with edge cropping when aspect ratios differ. Camera frames are cropped to the actual stage before recognition and pixelation. There are no zoom or image-pan controls. Touch and mouse controls share the same pointer handlers. In the normal studio, text/logo overlays can be positioned with the 3-by-3 controls or dragged using the **Position** tool. Admin position locks apply only in fair mode.
+
+The **Tile spacing** slider below tile size adjusts gutters from 0% to 50% of tile width, in photos and live mode. At 0%, adjacent tiles meet without background seams; deliberate subject cutouts and erased tiles remain. Spacing is included in SVG/PNG exports and captures. The same control is available in fair-mode adjustments when tile-size controls are permitted. Admins can save a **Default tile spacing** under Pixel rules; older on/off hairline settings migrate to 5% or 0% respectively.
 
 Gallery cards have individual delete buttons and a **Remove all selected** action. Previewed portraits remain unchanged PNGs, not inputs to a second pixelation pass. Deleting a displayed portrait also releases its preview; if a camera is still active, the live view resumes. Sharing snapshots the chosen image without stopping the camera. Cleanup applies only after successful native sharing, not after cancellation or download fallback.
 
@@ -43,6 +51,18 @@ Color, spacing, surface, and typography tokens are defined at the top of [`src/s
 
 The admin PIN is a convenience lock for a shared kiosk, not a security boundary: the application is static and runs entirely on the visitor's device. Do not treat it as protection for secrets or privileged server operations.
 
+### Locking down a fair device
+
+A web page cannot block browser/OS Escape handling, tab closure, application switching, or developer tools. An admin-started kiosk therefore keeps the app restricted after browser fullscreen exits, but cannot secure the device by itself.
+
+For a real unattended kiosk:
+
+1. Change the default app PIN in admin settings and enable the admin kiosk checkbox.
+2. Visit the deployed HTTPS app online and let its offline cache install; verify camera access, all models, and an offline reload before the event.
+3. Use a dedicated, non-administrator kiosk account. On Windows, configure **Settings → Accounts → Other users → Set up a kiosk**, select Microsoft Edge's digital/interactive signage experience, and set the deployed app URL. Keep the device-management exit credentials with staff.
+4. On macOS, use managed-device/single-app restrictions for an unattended installation. Chrome's presentation mode can be launched with `open -na "Google Chrome" --args --kiosk "https://your-host.example/pixelate/"`, but this alone does not block macOS shortcuts or quitting; an app PIN is not a substitute for OS lockdown.
+5. Test the actual touchscreen, permission prompts, Escape, application-switching shortcuts, restart behavior, and offline operation on the event device.
+
 Logo SVGs are checked for active content and external references, then rasterized locally before they are stored or embedded in exports. Upload only fonts whose licenses permit embedding in exported SVGs.
 
 An uploaded logo replaces typed brand identity in both toolbars and the artwork. Removing it restores the configured **Brand signature**, independently of the application/page title and message. The no-upload signature uses the logo position and lock, and remains available even when the message is turned off.
@@ -53,7 +73,7 @@ An uploaded logo replaces typed brand identity in both toolbars and the artwork.
 2. MediaPipe FaceDetector (BlazeFace) and ObjectDetector (EfficientDet-Lite0, COCO common-object classes) locate faces, people, and familiar objects locally. Their bounds only guide a bundled MagicTouch segmenter: **foreground follows learned silhouettes, not detection rectangles**. Detection and segmentation use the same cropped/mirrored snapshot and refresh during live capture. Multiple object masks are combined without filling their bounding boxes or internal gaps. Subject focus adjusts silhouette confidence within a bounded range; keep/background brush overrides take precedence.
 3. Recognized subjects use a gentler contrast curve and retain shadow/highlight cells so facial/object detail is not cut away. Background cells are probabilistically thinned and their palette colors scattered using a seeded random sequence. If model initialization fails, an explicit warning identifies the heuristic fallback: border-color/edge/saturation saliency with the original negative-space thresholds.
 4. Visible cell colors are grouped into luminance-sorted clusters with deterministic farthest-point initialization and iterative refinement. Brand-locked mode maps those tones to the active palette; free mode uses the sampled colors.
-5. One compound SVG path is emitted per used color. Optional hairline gaps, a solid or transparent canvas background, manual tile edits, a grid-snapped message, and a generic brand signature are applied at export time.
+5. One compound SVG path is emitted per used color. Adjustable tile spacing, a solid or transparent canvas background, manual tile edits, a grid-snapped message, and a generic brand signature are applied at export time.
 
 Segmentation estimates object shapes; it is not pixel-perfect, especially for fine hair, thin features, occlusions, or low-contrast boundaries. A prompt that selects surrounding background is rejected and retried at another location inside the detected region; if no outline is found, the UI says so instead of filling the box. Unsupported custom products are not guaranteed to be recognized; use the mask brush to correct outlines. There is no face identity recognition. Empty detections clear the old foreground mask rather than leaving stale subjects on screen. A transparent export does not embed an opaque canvas background.
 

@@ -47,7 +47,10 @@ export function renderAdminSettings(): void {
   (getElement("setting-light-cutoff") as HTMLInputElement).value = String(
     model.config.lightCutoffPercent,
   );
-  (getElement("setting-hairlines") as HTMLInputElement).checked = model.config.hairlines;
+  getElement<HTMLInputElement>("setting-tile-spacing").value = String(
+    model.config.tileSpacingPercent,
+  );
+  getElement("default-tile-spacing-value").textContent = `${model.config.tileSpacingPercent}%`;
   (getElement("setting-pin") as HTMLInputElement).value = "";
   getElement("dark-cutoff-value").textContent = `${model.config.darkCutoffPercent}%`;
   getElement("light-cutoff-value").textContent = `${model.config.lightCutoffPercent}%`;

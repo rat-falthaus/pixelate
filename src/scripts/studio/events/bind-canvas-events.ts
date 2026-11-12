@@ -7,12 +7,16 @@ import { elements } from "../dom/elements";
 import { model } from "../state/model";
 import { bindRange } from "./bind-range";
 
-/** Connect tile sizing, palette size, and canvas-background controls. */
+/** Connect tile sizing and spacing, palette size, and canvas-background controls. */
 export function bindCanvasEvents(): void {
   elements.tileSize.addEventListener("input", () => syncTileSize(elements.tileSize.value));
   elements.tileSizeNumber.addEventListener("change", () =>
     syncTileSize(elements.tileSizeNumber.value),
   );
+  bindRange(elements.tileSpacing, elements.tileSpacingValue, (value) => {
+    model.tileSpacingPercent = value;
+    renderArtwork();
+  });
   document.querySelectorAll<HTMLButtonElement>("[data-size]").forEach((button) => {
     button.addEventListener("click", () => syncTileSize(button.dataset.size ?? "18"));
   });

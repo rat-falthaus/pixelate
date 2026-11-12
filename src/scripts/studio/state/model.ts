@@ -10,6 +10,7 @@ export const model: AppModel = {
   subjectMask: null,
   fileName: "pixel-artwork",
   tileSize: 18,
+  tileSpacingPercent: config.tileSpacingPercent,
   freeColorCount: 7,
   background: "black",
   includeBackground: true,

@@ -26,7 +26,7 @@
       <section class="settings-card">
         <div class="settings-intro"><h3>Experience</h3><p>Choose whether visitors can adjust technical and brand controls.</p></div>
         <label class="settings-toggle"><span><strong>Lock to brand palette</strong><small>Map all image tones to the active brand colors.</small></span><input id="setting-lock-palette" type="checkbox" checked /></label>
-        <label class="settings-toggle"><span><strong>Fair / kiosk mode</strong><small>Hide studio-only controls and limit visitor options.</small></span><input id="setting-fair-mode" type="checkbox" /></label>
+        <label class="settings-toggle"><span><strong>Fair / kiosk mode</strong><small>Save a PIN-locked kiosk. To leave, unlock admin settings and disable this option. Browser fullscreen itself can still be exited.</small></span><input id="setting-fair-mode" type="checkbox" /></label>
         <label class="field-label">Camera
           <select id="setting-camera" class="text-input"><option value="">Automatic / front camera</option></select>
         </label>
@@ -97,7 +97,10 @@
           <span><span>Bright cutout threshold</span><output id="light-cutoff-value">95%</output></span>
           <input id="setting-light-cutoff" type="range" min="50" max="100" value="95" />
         </label>
-        <label class="settings-toggle"><span><strong>Tile hairlines</strong><small>Add a narrow background gap between tiles.</small></span><input id="setting-hairlines" type="checkbox" checked /></label>
+        <label class="range-control">
+          <span><span>Default tile spacing</span><output id="default-tile-spacing-value">5%</output></span>
+          <input id="setting-tile-spacing" type="range" min="0" max="50" value="5" />
+        </label>
       </section>
 
       <section class="settings-card">

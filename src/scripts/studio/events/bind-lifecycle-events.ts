@@ -3,8 +3,8 @@ import { refreshCameraDevices } from "../camera/refresh-camera-devices";
 import { stopLiveCamera } from "../camera/stop-live-camera";
 import { model } from "../state/model";
 import { fitArtboard } from "../viewport/fit-artboard";
-import { setDrawerOpen } from "../viewport/set-drawer-open";
 import { elements } from "../dom/elements";
+import { handleEscapeKey } from "./handle-escape-key";
 
 /** Fit on resize, release camera tracks on page exit, and dismiss the drawer on Escape. */
 export function bindLifecycleEvents(): void {
@@ -15,9 +15,5 @@ export function bindLifecycleEvents(): void {
     closeCamera();
     if (model.liveCameraActive) stopLiveCamera(false);
   });
-  window.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.body.classList.contains("drawer-open")) {
-      setDrawerOpen(false);
-    }
-  });
+  window.addEventListener("keydown", handleEscapeKey);
 }

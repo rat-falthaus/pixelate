@@ -164,8 +164,15 @@ MATTER.</textarea>
         <button type="button" data-size="28">Bold</button>
         <button type="button" data-size="42">Chunky</button>
       </div>
-      <input id="tile-size" type="range" min="4" max="80" value="18" aria-label="Tile size" />
-      <div class="range-ends"><span>4 px</span><span id="grid-count">— tiles</span><span>80 px</span></div>
+      <div class="control-stack">
+        <input id="tile-size" type="range" min="4" max="80" value="18" aria-label="Tile size" />
+        <div class="range-ends"><span>4 px</span><span id="grid-count">— tiles</span><span>80 px</span></div>
+        <label class="range-control">
+          <span><span>Tile spacing</span><output id="tile-spacing-value">5%</output></span>
+          <input id="tile-spacing" type="range" min="0" max="50" value="5" aria-describedby="tile-spacing-help" />
+        </label>
+        <p class="helper-text" id="tile-spacing-help">Percentage of tile width. Set to 0% for no gaps.</p>
+      </div>
     </section>
 
     <section class="control-section" id="canvas-section">

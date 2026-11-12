@@ -11,6 +11,7 @@ import { refreshCameraDevices } from "./refresh-camera-devices";
 import { stopLiveCamera } from "./stop-live-camera";
 import { initializeCameraRecognition } from "../recognition/initialize-camera-recognition";
 import { requestLiveFullscreen } from "./request-live-fullscreen";
+import { isKioskMode } from "../state/is-kiosk-mode";
 
 /** Start real camera rendering immediately; optional local recognition loads independently afterward. */
 export async function startLiveCamera(): Promise<void> {
@@ -85,7 +86,7 @@ export async function startLiveCamera(): Promise<void> {
     const enteredFullscreen = await fullscreenRequest;
     if (request !== runtime.liveCameraRequest || !model.liveCameraActive) return;
     notify(
-      !model.config.fairMode
+      !isKioskMode()
         ? "Live preview is ready. Tap “Snap & freeze” to keep it."
         : enteredFullscreen
           ? "Live portrait is ready. Tap “Snap & freeze” to keep it."

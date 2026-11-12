@@ -38,6 +38,8 @@ export const elements = {
   clearTiles: getElement("clear-tiles"),
   tileSize: getElement("tile-size") as HTMLInputElement,
   tileSizeNumber: getElement("tile-size-number") as HTMLInputElement,
+  tileSpacing: getElement("tile-spacing") as HTMLInputElement,
+  tileSpacingValue: getElement("tile-spacing-value"),
   gridCount: getElement("grid-count"),
   includeBackground: getElement("include-background") as HTMLInputElement,
   stage: getElement("stage"),

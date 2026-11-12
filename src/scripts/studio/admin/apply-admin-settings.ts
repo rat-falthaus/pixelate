@@ -7,6 +7,7 @@ import { model } from "../state/model";
 import { applyWorkspaceSettings } from "../ui/apply-workspace-settings";
 import { notify } from "../ui/notify";
 import { persistSettings } from "./persist-settings";
+import { runtime } from "../state/runtime";
 
 /** Validate and apply admin form values, persist them locally, and refresh the workspace. */
 export function applyAdminSettings(): void {
@@ -24,6 +25,7 @@ export function applyAdminSettings(): void {
   }
   model.config.enforceTheme = enforceTheme;
   model.config.fairMode = fairMode;
+  runtime.publicKioskMode = false;
   model.config.cameraDeviceId = cameraDeviceId;
   model.config.applicationTitle = title || "Pixel Studio";
   model.config.brandSignature = signature;
@@ -53,7 +55,12 @@ export function applyAdminSettings(): void {
   model.config.lightCutoffPercent = Number(
     (getElement("setting-light-cutoff") as HTMLInputElement).value,
   );
-  model.config.hairlines = (getElement("setting-hairlines") as HTMLInputElement).checked;
+  model.config.tileSpacingPercent = Number(
+    getElement<HTMLInputElement>("setting-tile-spacing").value,
+  );
+  model.tileSpacingPercent = model.config.tileSpacingPercent;
+  elements.tileSpacing.value = String(model.tileSpacingPercent);
+  elements.tileSpacingValue.textContent = `${model.tileSpacingPercent}%`;
   if (pin) model.config.adminPin = pin;
   const permissionIds: Record<keyof typeof model.config.permissions, string> = {
     subject: "permission-subject",

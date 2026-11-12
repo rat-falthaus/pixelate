@@ -9,13 +9,13 @@ import { model } from "../state/model";
 import { notify } from "../ui/notify";
 import type { MessagePosition } from "../../../lib/types";
 import { updateLiveUi } from "../ui/update-live-ui";
-import { isPositionLocked } from "../../../lib/config";
+import { isOverlayPositionLocked } from "../state/is-overlay-position-locked";
 
 /** Connect admin logo and font uploads and asset-removal controls. */
 export function bindBrandAssetEvents(): void {
   document.querySelectorAll<HTMLButtonElement>("[data-logo-position]").forEach((button) => {
     button.addEventListener("click", () => {
-      if (isPositionLocked(model.config, "logo")) return;
+      if (isOverlayPositionLocked("logo")) return;
       model.config.logoPosition = button.dataset.logoPosition as MessagePosition;
       model.logoOrigin = null;
       renderArtwork();

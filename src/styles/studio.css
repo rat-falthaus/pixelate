@@ -948,6 +948,7 @@ input[type="range"]::-moz-range-thumb {
   right: 0;
   left: 0;
   display: none;
+  flex-wrap: wrap;
   min-height: 76px;
   align-items: center;
   justify-content: space-between;
@@ -992,6 +993,7 @@ input[type="range"]::-moz-range-thumb {
 }
 .live-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
   gap: 7px;

@@ -31,6 +31,8 @@ export async function initialize(): Promise<void> {
   elements.messageScaleValue.textContent = `${model.messageScale}%`;
   elements.messageText.value = model.message;
   elements.freeColorCountValue.textContent = String(model.freeColorCount);
+  elements.tileSpacing.value = String(model.tileSpacingPercent);
+  elements.tileSpacingValue.textContent = `${model.tileSpacingPercent}%`;
   elements.includeBackground.checked = model.includeBackground;
   elements.subjectEnabled.checked = model.subjectEnabled;
   elements.messageEnabled.checked = model.messageEnabled;

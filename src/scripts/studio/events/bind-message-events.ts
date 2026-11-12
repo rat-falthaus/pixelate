@@ -3,7 +3,7 @@ import { renderArtwork } from "../artwork/render-artwork";
 import { elements } from "../dom/elements";
 import { model } from "../state/model";
 import { bindRange } from "./bind-range";
-import { isPositionLocked } from "../../../lib/config";
+import { isOverlayPositionLocked } from "../state/is-overlay-position-locked";
 import { updateLiveUi } from "../ui/update-live-ui";
 
 /** Connect message content, placement, scale, and signature controls. */
@@ -20,7 +20,7 @@ export function bindMessageEvents(): void {
   });
   document.querySelectorAll<HTMLButtonElement>("[data-position]").forEach((button) => {
     button.addEventListener("click", () => {
-      if (isPositionLocked(model.config, "message")) return;
+      if (isOverlayPositionLocked("message")) return;
       model.messagePosition = button.dataset.position as MessagePosition;
       model.messageOrigin = null;
       renderArtwork();

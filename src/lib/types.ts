@@ -59,7 +59,7 @@ export interface StudioConfig {
   galleryClearDelaySeconds: number;
   darkCutoffPercent: number;
   lightCutoffPercent: number;
-  hairlines: boolean;
+  tileSpacingPercent: number;
   permissions: VisitorPermissions;
   activeThemeId: string;
   themes: BrandTheme[];
@@ -115,7 +115,7 @@ export interface ArtworkOptions {
   manualTileOverrides: Map<string, TileOverride>;
   background: BackgroundMode;
   includeBackground: boolean;
-  hairlines: boolean;
+  tileSpacingPercent: number;
   backgroundScatter: number;
   randomSeed: number;
   messageEnabled: boolean;
@@ -139,6 +139,7 @@ export interface AppModel {
   subjectMask: SubjectMask | null;
   fileName: string;
   tileSize: number;
+  tileSpacingPercent: number;
   freeColorCount: number;
   background: BackgroundMode;
   includeBackground: boolean;

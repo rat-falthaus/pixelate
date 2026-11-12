@@ -8,7 +8,7 @@ import { DEFAULT_CONFIG, DEFAULT_PERMISSIONS } from "./state";
 /** Validate stored settings and merge compatible values with bundled defaults. */
 export function normalizeConfig(value: unknown): StudioConfig {
   if (!value || typeof value !== "object") return cloneDefaultConfig();
-  const stored = value as Partial<StudioConfig>;
+  const { hairlines, ...stored } = value as Partial<StudioConfig> & { hairlines?: unknown };
   const themes = Array.isArray(stored.themes) ? stored.themes.filter(isTheme) : [];
   const safeThemes = themes.length ? themes : cloneDefaultConfig().themes;
   const activeThemeId = safeThemes.some((theme) => theme.id === stored.activeThemeId)
@@ -66,7 +66,12 @@ export function normalizeConfig(value: unknown): StudioConfig {
       30,
       DEFAULT_CONFIG.galleryClearDelaySeconds,
     ),
-    hairlines: typeof stored.hairlines === "boolean" ? stored.hairlines : DEFAULT_CONFIG.hairlines,
+    tileSpacingPercent: clampNumber(
+      stored.tileSpacingPercent,
+      0,
+      50,
+      hairlines === false ? 0 : DEFAULT_CONFIG.tileSpacingPercent,
+    ),
     adminPin:
       typeof stored.adminPin === "string" && stored.adminPin.length >= 3
         ? stored.adminPin
