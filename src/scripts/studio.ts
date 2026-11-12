@@ -1786,6 +1786,7 @@ function bindEvents(): void {
   elements.stage.addEventListener('pointerdown', (event) => {
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const target = event.target;
+    if (target instanceof Element && target.closest('button, a, input, select, textarea, [role="button"]')) return;
     const messageTarget = target instanceof Element && target.closest('[data-draggable="message"]');
     const logoTarget = target instanceof Element && target.closest('[data-draggable="logo"]');
     if (messageTarget && model.messageEnabled && !model.config.messagePositionLocked && model.tool === 'pan') {
