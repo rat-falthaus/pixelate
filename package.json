@@ -7,7 +7,7 @@
     "dev": "node scripts/copy-vision-assets.mjs && astro dev",
     "build": "node scripts/copy-vision-assets.mjs && astro build && node scripts/build-offline.mjs",
     "preview": "astro preview",
-    "check": "tsc --noEmit",
+    "check": "astro sync && tsc --noEmit",
     "lint": "oxlint .",
     "format": "oxfmt ."
   },
