@@ -330,3 +330,126 @@ test('free-palette background scatter preserves subject colors', () => {
   assert.equal(scattered.tileCount, 20);
   assert.match(scattered.markup, /fill="#111111" d="M0 0h18v18h-18Z/);
 });
+
+test('normal studio exposes live capture states and preserves the camera when settings are applied', async () => {
+  const previous = {
+    document: globalThis.document,
+    localStorage: globalThis.localStorage,
+    window: globalThis.window,
+    requestAnimationFrame: globalThis.requestAnimationFrame,
+    cancelAnimationFrame: globalThis.cancelAnimationFrame,
+  };
+  const nodes = new Map();
+  const makeElement = () => {
+    const classes = new Set();
+    return {
+      style: {},
+      classList: {
+        add: (...names) => names.forEach((name) => classes.add(name)),
+        remove: (...names) => names.forEach((name) => classes.delete(name)),
+        contains: (name) => classes.has(name),
+        toggle(name, force) {
+          const enabled = force ?? !classes.has(name);
+          if (enabled) classes.add(name);
+          else classes.delete(name);
+          return enabled;
+        },
+      },
+      setAttribute() {},
+      removeAttribute() {},
+      replaceChildren() {},
+      append() {},
+      addEventListener() {},
+    };
+  };
+  let fullscreenExits = 0;
+  let fullscreenRequests = 0;
+  globalThis.document = {
+    body: makeElement(),
+    getElementById(id) {
+      if (!nodes.has(id)) nodes.set(id, makeElement());
+      return nodes.get(id);
+    },
+    createElement: makeElement,
+    querySelector: () => null,
+    querySelectorAll: () => [],
+    fullscreenElement: {},
+    documentElement: {
+      async requestFullscreen() {
+        fullscreenRequests += 1;
+        document.fullscreenElement = {};
+      },
+    },
+    async exitFullscreen() {
+      fullscreenExits += 1;
+      this.fullscreenElement = null;
+    },
+  };
+  globalThis.localStorage = { getItem: () => null };
+  globalThis.window = { clearTimeout() {}, clearInterval() {}, setTimeout: () => 0 };
+  globalThis.requestAnimationFrame = () => 0;
+  globalThis.cancelAnimationFrame = () => {};
+  try {
+    const { model } = await import('../src/scripts/studio/state/model.ts');
+    const { runtime } = await import('../src/scripts/studio/state/runtime.ts');
+    const { updateLiveUi } = await import('../src/scripts/studio/ui/update-live-ui.ts');
+    const { applyWorkspaceSettings } =
+      await import('../src/scripts/studio/ui/apply-workspace-settings.ts');
+    const savedModel = { ...model };
+    const savedRuntime = { ...runtime };
+    try {
+      model.config = { ...model.config, fairMode: false };
+      updateLiveUi();
+      assert.equal(nodes.get('studio-live-camera').textContent, 'Start live camera');
+      assert.ok(nodes.get('studio-stop-live').classList.contains('is-hidden'));
+
+      let stopped = 0;
+      model.liveCameraActive = true;
+      runtime.liveCameraStream = { getTracks: () => [{ stop: () => stopped++ }] };
+      document.body.classList.add('fair-mode');
+      applyWorkspaceSettings();
+      assert.equal(model.liveCameraActive, true);
+      assert.equal(stopped, 0);
+      assert.equal(
+        fullscreenExits,
+        1,
+        'leaving fair mode exits its fullscreen without stopping video',
+      );
+      assert.equal(nodes.get('studio-live-camera').textContent, 'Snap & freeze');
+      assert.equal(nodes.get('studio-stop-live').classList.contains('is-hidden'), false);
+      assert.equal(
+        nodes.get('compare-photo').disabled,
+        true,
+        'do not compare live video with a stale still',
+      );
+
+      document.fullscreenElement = {};
+      applyWorkspaceSettings();
+      assert.equal(
+        fullscreenExits,
+        1,
+        'normal settings preserve independently requested fullscreen',
+      );
+      assert.equal(model.liveCameraActive, true);
+      assert.equal(fullscreenRequests, 0);
+
+      document.fullscreenElement = null;
+      model.config.fairMode = true;
+      applyWorkspaceSettings();
+      assert.equal(fullscreenRequests, 1, 'entering fair mode can expand the existing live stream');
+      assert.equal(model.liveCameraActive, true);
+      assert.equal(stopped, 0);
+
+      model.liveCameraActive = false;
+      runtime.liveCameraStarting = true;
+      updateLiveUi();
+      assert.equal(nodes.get('studio-live-camera').disabled, true);
+      assert.equal(nodes.get('studio-stop-live').classList.contains('is-hidden'), false);
+    } finally {
+      Object.assign(model, savedModel);
+      Object.assign(runtime, savedRuntime);
+    }
+  } finally {
+    Object.assign(globalThis, previous);
+  }
+});

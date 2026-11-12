@@ -21,6 +21,8 @@ The build bundles the recognition runtime, its WASM files, and the hand, face, c
 
 ## Fair / kiosk mode
 
+Live camera and capturing are also available in the normal studio: use **Start live camera** above the artwork, then **Snap & freeze** to save a portrait to the gallery. The same three-second preview and gesture capture work in both modes. **Stop live** releases the camera and keeps the current portrait; **Gallery** opens saved captures. The normal studio keeps its editing layout and does not request fullscreen. The existing **Camera** action still offers a one-shot photo dialog. Opening it releases an active live stream first.
+
 Fair mode presents a camera mosaic fitted to the entire screen. Start the camera, then hold an open palm steady to trigger the translucent 3-2-1 countdown; the captured portrait is previewed for three seconds before live mode resumes. The capture button remains available when gesture recognition is unavailable. Each freeze is saved locally in the gallery, where visitors can select and share multiple images, preview one, or drag it onto the stage. On supported devices, the share sheet sends PNG files; otherwise selected gallery images can be saved locally. Successfully shared selections are removed from local storage after the admin-configured delay.
 
 The admin camera selector lists built-in and external video inputs; device names appear after camera permission has been granted. Apply settings to restart an active stream on the selected input. A missing selected device is reported rather than silently replaced. Live rendering starts before recognition models finish initializing, and a recognition failure does not stop camera rendering or manual capture.

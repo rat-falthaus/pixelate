@@ -2,6 +2,7 @@ import { elements } from '../dom/elements';
 import { renderBrandIdentity } from '../branding/render-brand-identity';
 import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
+import { runtime } from '../state/runtime';
 
 /** Synchronize camera status, empty-state visibility, and visitor position locks. */
 export function updateLiveUi(): void {
@@ -25,6 +26,19 @@ export function updateLiveUi(): void {
     'aria-label',
     model.liveCameraActive ? 'Freeze this portrait' : 'Start a new portrait',
   );
+  const studioCamera = getElement<HTMLButtonElement>('studio-live-camera');
+  studioCamera.textContent = runtime.liveCameraStarting
+    ? 'Starting camera...'
+    : model.liveCameraActive
+      ? 'Snap & freeze'
+      : 'Start live camera';
+  studioCamera.disabled = runtime.liveCameraStarting;
+  getElement('studio-stop-live').classList.toggle(
+    'is-hidden',
+    !model.liveCameraActive && !runtime.liveCameraStarting,
+  );
+  elements.comparePhoto.disabled =
+    (model.liveCameraActive && !model.freezePreview) || Boolean(runtime.previewFreeze);
   getElement('return-to-live').classList.toggle('is-hidden', !model.freezePreview);
   getElement('freeze-preview-actions').classList.toggle('is-hidden', !model.freezePreview);
   getElement('logo-section').classList.toggle(

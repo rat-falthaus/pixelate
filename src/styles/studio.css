@@ -321,17 +321,18 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
 .workspace-toolbar {
   display: flex;
   min-height: 52px;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 0 18px;
+  padding: 8px 18px;
   border-bottom: 1px solid #242a24;
   background: #171a17;
 }
 .artwork-stats { display: flex; align-items: center; gap: 10px; color: #8e998a; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 10px; white-space: nowrap; }
 .artwork-stats strong { color: #e1e7db; font-weight: 650; }
 .stat-divider { width: 1px; height: 14px; background: #384037; }
-.view-tools { display: flex; align-items: center; gap: 9px; }
+.view-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
 .artboard-stage {
   position: relative;
   display: flex;
@@ -745,7 +746,7 @@ textarea.text-input { min-height: 60px; resize: vertical; }
   .control-section { padding: 12px 0; }
   .control-section:not(.source-section) { }
   .workspace { min-height: 0; flex: 1; }
-  .workspace-toolbar { min-height: 44px; padding: 0 10px; }
+  .workspace-toolbar { min-height: 44px; padding: 6px 10px; }
   .artwork-stats { gap: 6px; font-size: 9px; }
   .stat-size { display: none; }
   .view-tools { gap: 5px; }
@@ -782,6 +783,7 @@ textarea.text-input { min-height: 60px; resize: vertical; }
   .button,
   .button-small,
   .live-actions .button,
+  .view-tools > .button,
   .text-button,
   .segmented button,
   .position-grid button {

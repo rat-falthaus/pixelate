@@ -4,10 +4,13 @@ import { closeCamera } from './close-camera';
 import { getCameraConstraints } from './get-camera-constraints';
 import { refreshCameraDevices } from './refresh-camera-devices';
 import { notify } from '../ui/notify';
+import { model } from '../state/model';
+import { stopLiveCamera } from './stop-live-camera';
 
 /** Open the still-camera dialog and request a local video stream with visible failure feedback. */
 export async function openCamera(): Promise<void> {
   if (elements.cameraDialog.open) return;
+  if (model.liveCameraActive || runtime.liveCameraStarting) stopLiveCamera(true);
   const request = ++runtime.cameraRequest;
   elements.cameraStatus.textContent = 'Requesting camera access…';
   elements.cameraStatus.classList.remove('is-hidden');

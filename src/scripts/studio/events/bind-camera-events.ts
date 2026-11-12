@@ -5,6 +5,7 @@ import { freezeLiveCamera } from '../camera/freeze-live-camera';
 import { openCamera } from '../camera/open-camera';
 import { returnToLive } from '../camera/return-to-live';
 import { startLiveCamera } from '../camera/start-live-camera';
+import { stopLiveCamera } from '../camera/stop-live-camera';
 import { getElement } from '../dom/get-element';
 import { openGallery } from '../gallery/open-gallery';
 import { shareSelectedGalleryFreezes } from '../gallery/share-selected-gallery-freezes';
@@ -19,9 +20,12 @@ export function bindCameraEvents(): void {
   getElement('camera-dialog').addEventListener('close', closeCamera);
   getElement('live-start-camera').addEventListener('click', () => void startLiveCamera());
   getElement('live-camera').addEventListener('click', freezeLiveCamera);
+  getElement('studio-live-camera').addEventListener('click', freezeLiveCamera);
+  getElement('studio-stop-live').addEventListener('click', () => stopLiveCamera(true));
   getElement('live-new-colors').addEventListener('click', randomizeColors);
   getElement('live-admin').addEventListener('click', openAdminGate);
   getElement('gallery-open').addEventListener('click', () => void openGallery());
+  getElement('studio-gallery-open').addEventListener('click', () => void openGallery());
   getElement('gallery-close').addEventListener('click', () =>
     getElement('gallery-overlay').classList.add('is-hidden'),
   );

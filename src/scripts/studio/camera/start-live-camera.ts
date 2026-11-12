@@ -10,6 +10,7 @@ import { getCameraConstraints } from './get-camera-constraints';
 import { refreshCameraDevices } from './refresh-camera-devices';
 import { stopLiveCamera } from './stop-live-camera';
 import { initializeCameraRecognition } from '../recognition/initialize-camera-recognition';
+import { requestLiveFullscreen } from './request-live-fullscreen';
 
 /** Start real camera rendering immediately; optional local recognition loads independently afterward. */
 export async function startLiveCamera(): Promise<void> {
@@ -24,18 +25,9 @@ export async function startLiveCamera(): Promise<void> {
   }
   const request = ++runtime.liveCameraRequest;
   runtime.liveCameraStarting = true;
+  updateLiveUi();
 
-  let fullscreenRequest = Promise.resolve(Boolean(document.fullscreenElement));
-  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
-    try {
-      fullscreenRequest = document.documentElement
-        .requestFullscreen()
-        .then(() => true)
-        .catch(() => false);
-    } catch {
-      fullscreenRequest = Promise.resolve(false);
-    }
-  }
+  const fullscreenRequest = requestLiveFullscreen();
   let stream: MediaStream | null = null;
   try {
     stream = await navigator.mediaDevices.getUserMedia(getCameraConstraints());
@@ -93,9 +85,11 @@ export async function startLiveCamera(): Promise<void> {
     const enteredFullscreen = await fullscreenRequest;
     if (request !== runtime.liveCameraRequest || !model.liveCameraActive) return;
     notify(
-      enteredFullscreen
-        ? 'Live portrait is ready. Tap “Snap & freeze” to keep it.'
-        : 'Live portrait is ready. Fullscreen is unavailable here; tap “Snap & freeze” to keep it.',
+      !model.config.fairMode
+        ? 'Live preview is ready. Tap “Snap & freeze” to keep it.'
+        : enteredFullscreen
+          ? 'Live portrait is ready. Tap “Snap & freeze” to keep it.'
+          : 'Live portrait is ready. Fullscreen is unavailable here; tap “Snap & freeze” to keep it.',
     );
   } catch (error) {
     stream?.getTracks().forEach((track) => track.stop());
@@ -112,6 +106,9 @@ export async function startLiveCamera(): Promise<void> {
     updateLiveUi();
     notify(`${message} You can still choose a photo.`);
   } finally {
-    if (request === runtime.liveCameraRequest) runtime.liveCameraStarting = false;
+    if (request === runtime.liveCameraRequest) {
+      runtime.liveCameraStarting = false;
+      updateLiveUi();
+    }
   }
 }
