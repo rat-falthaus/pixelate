@@ -1,4 +1,4 @@
-import type { SubjectMask, SubjectRegion } from './types';
+import type { SubjectMask, SubjectRegion } from "./types";
 
 /** Reject background selections when a box's center lands in a hole or beside the actual object. */
 export function isSubjectMask(mask: SubjectMask, region: SubjectRegion): boolean {

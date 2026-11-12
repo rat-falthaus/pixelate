@@ -1,6 +1,6 @@
-import { openDatabase } from './open-database';
-import { requestResult } from './request-result';
-import { transactionComplete } from './transaction-complete';
+import { openDatabase } from "./open-database";
+import { requestResult } from "./request-result";
+import { transactionComplete } from "./transaction-complete";
 
 /**
  * Execute one store request and wait for its transaction to commit.

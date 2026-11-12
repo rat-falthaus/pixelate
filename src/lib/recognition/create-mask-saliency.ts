@@ -1,4 +1,4 @@
-import type { SubjectMask } from './types';
+import type { SubjectMask } from "./types";
 
 /** Sample silhouette confidence at tile centers without filling boxes, holes, or disconnected gaps. */
 export function createMaskSaliency(mask: SubjectMask, cols: number, rows: number): Float32Array {

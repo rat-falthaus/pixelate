@@ -1,12 +1,12 @@
-import { paintAt } from '../artwork/paint-at';
-import { renderArtwork } from '../artwork/render-artwork';
-import { elements } from '../dom/elements';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
+import { paintAt } from "../artwork/paint-at";
+import { renderArtwork } from "../artwork/render-artwork";
+import { elements } from "../dom/elements";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
 
 /** Continue grid-snapped overlay dragging or touch/mouse painting, never image panning. */
 export function handleStagePointerMove(event: PointerEvent): void {
-  if (elements.stage.dataset.draggingMessage === 'true') {
+  if (elements.stage.dataset.draggingMessage === "true") {
     const rect = elements.artboard.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     model.messageOrigin = {
@@ -20,7 +20,7 @@ export function handleStagePointerMove(event: PointerEvent): void {
     renderArtwork();
     return;
   }
-  if (elements.stage.dataset.draggingLogo === 'true') {
+  if (elements.stage.dataset.draggingLogo === "true") {
     const rect = elements.artboard.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     model.logoOrigin = {

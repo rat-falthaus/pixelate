@@ -1,5 +1,5 @@
-import { model } from '../state/model';
-import { renderUndoControls } from '../ui/render-undo-controls';
+import { model } from "../state/model";
+import { renderUndoControls } from "../ui/render-undo-controls";
 
 /** Snapshot tile overrides before editing, retaining at most thirty undo steps. */
 export function saveTileUndoSnapshot(): void {

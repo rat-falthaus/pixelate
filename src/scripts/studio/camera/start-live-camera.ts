@@ -1,26 +1,26 @@
-import { elements } from '../dom/elements';
-import { setImageSource } from '../photo/set-image-source';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { notify } from '../ui/notify';
-import { updateLiveUi } from '../ui/update-live-ui';
-import { drawCameraFrame } from './draw-camera-frame';
-import { updateLiveFrame } from './update-live-frame';
-import { getCameraConstraints } from './get-camera-constraints';
-import { refreshCameraDevices } from './refresh-camera-devices';
-import { stopLiveCamera } from './stop-live-camera';
-import { initializeCameraRecognition } from '../recognition/initialize-camera-recognition';
-import { requestLiveFullscreen } from './request-live-fullscreen';
+import { elements } from "../dom/elements";
+import { setImageSource } from "../photo/set-image-source";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { notify } from "../ui/notify";
+import { updateLiveUi } from "../ui/update-live-ui";
+import { drawCameraFrame } from "./draw-camera-frame";
+import { updateLiveFrame } from "./update-live-frame";
+import { getCameraConstraints } from "./get-camera-constraints";
+import { refreshCameraDevices } from "./refresh-camera-devices";
+import { stopLiveCamera } from "./stop-live-camera";
+import { initializeCameraRecognition } from "../recognition/initialize-camera-recognition";
+import { requestLiveFullscreen } from "./request-live-fullscreen";
 
 /** Start real camera rendering immediately; optional local recognition loads independently afterward. */
 export async function startLiveCamera(): Promise<void> {
   if (model.liveCameraActive || runtime.liveCameraStarting) return;
-  elements.liveCameraError.classList.add('is-hidden');
+  elements.liveCameraError.classList.add("is-hidden");
   if (!navigator.mediaDevices?.getUserMedia) {
     elements.liveCameraError.textContent =
-      'Camera access is unavailable here. Choose a photo instead.';
-    elements.liveCameraError.classList.remove('is-hidden');
-    notify('Camera access is unavailable. Choose a photo instead.');
+      "Camera access is unavailable here. Choose a photo instead.";
+    elements.liveCameraError.classList.remove("is-hidden");
+    notify("Camera access is unavailable. Choose a photo instead.");
     return;
   }
   const request = ++runtime.liveCameraRequest;
@@ -40,11 +40,11 @@ export async function startLiveCamera(): Promise<void> {
     if (!elements.liveCameraVideo.videoWidth) {
       await new Promise<void>((resolve, reject) => {
         const timeout = window.setTimeout(
-          () => reject(new Error('The camera preview did not become ready.')),
+          () => reject(new Error("The camera preview did not become ready.")),
           5000,
         );
         elements.liveCameraVideo.addEventListener(
-          'loadeddata',
+          "loadeddata",
           () => {
             window.clearTimeout(timeout);
             resolve();
@@ -61,22 +61,22 @@ export async function startLiveCamera(): Promise<void> {
     runtime.liveCameraStream = stream;
     const activeStream = stream;
     activeStream.getVideoTracks().forEach((track) =>
-      track.addEventListener('ended', () => {
+      track.addEventListener("ended", () => {
         if (runtime.liveCameraStream !== activeStream) return;
         stopLiveCamera(false);
-        notify('Camera disconnected. Choose an available camera in admin settings.');
+        notify("Camera disconnected. Choose an available camera in admin settings.");
       }),
     );
     stream = null;
-    runtime.liveFrameCanvas = document.createElement('canvas');
+    runtime.liveFrameCanvas = document.createElement("canvas");
     if (!drawCameraFrame(elements.liveCameraVideo, runtime.liveFrameCanvas, 900)) {
-      throw new Error('The camera did not provide an image.');
+      throw new Error("The camera did not provide an image.");
     }
     model.liveCameraActive = true;
     model.freezePreview = false;
     model.subjectMask = null;
     runtime.liveCameraStarting = false;
-    setImageSource(runtime.liveFrameCanvas, 'live-portrait.png');
+    setImageSource(runtime.liveFrameCanvas, "live-portrait.png");
     runtime.lastLiveFrameAt = 0;
     runtime.lastSubjectFrameAt = 0;
     runtime.liveFrameRequest = requestAnimationFrame(updateLiveFrame);
@@ -86,10 +86,10 @@ export async function startLiveCamera(): Promise<void> {
     if (request !== runtime.liveCameraRequest || !model.liveCameraActive) return;
     notify(
       !model.config.fairMode
-        ? 'Live preview is ready. Tap “Snap & freeze” to keep it.'
+        ? "Live preview is ready. Tap “Snap & freeze” to keep it."
         : enteredFullscreen
-          ? 'Live portrait is ready. Tap “Snap & freeze” to keep it.'
-          : 'Live portrait is ready. Fullscreen is unavailable here; tap “Snap & freeze” to keep it.',
+          ? "Live portrait is ready. Tap “Snap & freeze” to keep it."
+          : "Live portrait is ready. Fullscreen is unavailable here; tap “Snap & freeze” to keep it.",
     );
   } catch (error) {
     stream?.getTracks().forEach((track) => track.stop());
@@ -100,9 +100,9 @@ export async function startLiveCamera(): Promise<void> {
     elements.liveCameraVideo.srcObject = null;
     model.liveCameraActive = false;
     runtime.liveCameraStarting = false;
-    const message = error instanceof Error ? error.message : 'Camera access was denied.';
+    const message = error instanceof Error ? error.message : "Camera access was denied.";
     elements.liveCameraError.textContent = `${message} You can still choose a photo.`;
-    elements.liveCameraError.classList.remove('is-hidden');
+    elements.liveCameraError.classList.remove("is-hidden");
     updateLiveUi();
     notify(`${message} You can still choose a photo.`);
   } finally {

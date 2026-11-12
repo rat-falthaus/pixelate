@@ -2,7 +2,7 @@ import type {
   FaceDetector,
   InteractiveSegmenterLegacy,
   ObjectDetector,
-} from '@mediapipe/tasks-vision';
+} from "@mediapipe/tasks-vision";
 
 /** Detection bounds are normalized to the exact artwork source, after camera cropping/mirroring. */
 export interface SubjectRegion {

@@ -1,4 +1,4 @@
-import { colorDistance } from '../color';
+import { colorDistance } from "../color";
 
 /** Estimate and smooth foreground likelihood from border color, local edges, and a center prior. */
 export function createSaliencyMap(

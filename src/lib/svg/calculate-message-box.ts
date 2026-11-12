@@ -1,6 +1,6 @@
-import type { MessagePosition } from '../types';
-import { calculateOverlayOrigin } from './calculate-overlay-origin';
-import type { GridBox } from './types';
+import type { MessagePosition } from "../types";
+import { calculateOverlayOrigin } from "./calculate-overlay-origin";
+import type { GridBox } from "./types";
 
 /** Estimate text bounds in grid cells and clamp its chosen anchor or dragged origin. */
 export function calculateMessageBox(
@@ -16,7 +16,7 @@ export function calculateMessageBox(
     .split(/\r?\n/)
     .map((line) => line.trim())
     .filter(Boolean);
-  const safeLines = lines.length ? lines : [' '];
+  const safeLines = lines.length ? lines : [" "];
   const baseFont = Math.max(10, Math.round(((cols * tileSize) / 14.5) * (scale / 100)));
   const longestLine = Math.max(...safeLines.map((line) => line.length));
   const estimatedWidth = longestLine * baseFont * 0.72 + tileSize * 1.3;

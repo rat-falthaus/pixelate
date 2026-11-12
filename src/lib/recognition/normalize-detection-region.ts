@@ -1,5 +1,5 @@
-import type { BoundingBox } from '@mediapipe/tasks-vision';
-import type { SubjectRegion } from './types';
+import type { BoundingBox } from "@mediapipe/tasks-vision";
+import type { SubjectRegion } from "./types";
 
 /** Clip pixel bounds to a normalized source-space region, rejecting empty or invalid detections. */
 export function normalizeDetectionRegion(

@@ -1,6 +1,6 @@
 export interface StoredBrandAsset {
   id: string;
-  kind: 'logo' | 'font';
+  kind: "logo" | "font";
   name: string;
   type: string;
   blob: Blob;

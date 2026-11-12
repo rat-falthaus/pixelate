@@ -3,16 +3,16 @@ import {
   FilesetResolver,
   InteractiveSegmenterLegacy,
   ObjectDetector,
-} from '@mediapipe/tasks-vision';
-import type { SubjectDetectors } from './types';
+} from "@mediapipe/tasks-vision";
+import type { SubjectDetectors } from "./types";
 
 /** Load pinned, same-origin CPU models; no CDN or remote inference is involved. */
 export async function createSubjectDetectors(baseUrl: string): Promise<SubjectDetectors> {
-  const base = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const base = baseUrl.endsWith("/") ? baseUrl : `${baseUrl}/`;
   const vision = await FilesetResolver.forVisionTasks(`${base}vendor/mediapipe/wasm`);
   const objects = await ObjectDetector.createFromOptions(vision, {
-    baseOptions: { modelAssetPath: `${base}models/efficientdet_lite0.tflite`, delegate: 'CPU' },
-    runningMode: 'IMAGE',
+    baseOptions: { modelAssetPath: `${base}models/efficientdet_lite0.tflite`, delegate: "CPU" },
+    runningMode: "IMAGE",
     maxResults: 8,
     scoreThreshold: 0.45,
   });
@@ -20,14 +20,14 @@ export async function createSubjectDetectors(baseUrl: string): Promise<SubjectDe
     const faces = await FaceDetector.createFromOptions(vision, {
       baseOptions: {
         modelAssetPath: `${base}models/blaze_face_short_range.tflite`,
-        delegate: 'CPU',
+        delegate: "CPU",
       },
-      runningMode: 'IMAGE',
+      runningMode: "IMAGE",
       minDetectionConfidence: 0.5,
     });
     try {
       const segmenter = await InteractiveSegmenterLegacy.createFromOptions(vision, {
-        baseOptions: { modelAssetPath: `${base}models/magic_touch.tflite`, delegate: 'CPU' },
+        baseOptions: { modelAssetPath: `${base}models/magic_touch.tflite`, delegate: "CPU" },
         outputConfidenceMasks: true,
         outputCategoryMask: false,
       });

@@ -1,10 +1,10 @@
-import { luminance, seededRandom } from '../color';
-import type { ImageSource, PhotoCell, SampledArtwork, SamplingOptions } from '../types';
-import { applyContrast } from './apply-contrast';
-import { createSaliencyMap } from './create-saliency-map';
-import { quantize } from './quantize';
-import { MAX_GRID_EDGE } from './state';
-import { createMaskSaliency } from '../recognition/create-mask-saliency';
+import { luminance, seededRandom } from "../color";
+import type { ImageSource, PhotoCell, SampledArtwork, SamplingOptions } from "../types";
+import { applyContrast } from "./apply-contrast";
+import { createSaliencyMap } from "./create-saliency-map";
+import { quantize } from "./quantize";
+import { MAX_GRID_EDGE } from "./state";
+import { createMaskSaliency } from "../recognition/create-mask-saliency";
 
 /**
  * Samples a browser-decoded image into square cells, estimates foreground
@@ -20,13 +20,13 @@ export function sampleImage(image: ImageSource, options: SamplingOptions): Sampl
   const cols = Math.max(1, Math.floor((sourceWidth * gridScale) / tileSize));
   const rows = Math.max(1, Math.floor((sourceHeight * gridScale) / tileSize));
 
-  const canvas = document.createElement('canvas');
+  const canvas = document.createElement("canvas");
   canvas.width = cols;
   canvas.height = rows;
-  const context = canvas.getContext('2d', { willReadFrequently: true });
-  if (!context) throw new Error('This browser could not create an image sampling canvas.');
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  if (!context) throw new Error("This browser could not create an image sampling canvas.");
   context.imageSmoothingEnabled = true;
-  context.imageSmoothingQuality = 'high';
+  context.imageSmoothingQuality = "high";
   context.drawImage(image, 0, 0, cols, rows);
 
   const pixels = context.getImageData(0, 0, cols, rows).data;

@@ -1,10 +1,10 @@
-import { isOpenPalm } from '../../../lib/gesture';
-import { elements } from '../dom/elements';
-import { runtime } from '../state/runtime';
-import { notify } from '../ui/notify';
-import { beginFreezeCountdown } from './begin-freeze-countdown';
-import { model } from '../state/model';
-import { updateLiveUi } from '../ui/update-live-ui';
+import { isOpenPalm } from "../../../lib/gesture";
+import { elements } from "../dom/elements";
+import { runtime } from "../state/runtime";
+import { notify } from "../ui/notify";
+import { beginFreezeCountdown } from "./begin-freeze-countdown";
+import { model } from "../state/model";
+import { updateLiveUi } from "../ui/update-live-ui";
 
 /** Detect a steady open palm while isolating inference failures from the live-render loop. */
 export function updateCaptureGesture(timestamp: number): void {
@@ -41,13 +41,13 @@ export function updateCaptureGesture(timestamp: number): void {
       }
     }
   } catch (error) {
-    console.error('Hand gesture recognition stopped.', error);
+    console.error("Hand gesture recognition stopped.", error);
     runtime.handLandmarker.close();
     runtime.handLandmarker = null;
     runtime.gestureStartedAt = 0;
     runtime.gesturePalmPoint = null;
     runtime.gestureArmed = true;
     updateLiveUi();
-    notify('Gesture recognition stopped. The live camera and capture button remain available.');
+    notify("Gesture recognition stopped. The live camera and capture button remain available.");
   }
 }

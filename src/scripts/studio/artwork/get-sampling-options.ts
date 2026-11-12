@@ -1,6 +1,6 @@
-import { getActiveTheme } from '../../../lib/config';
-import type { SamplingOptions } from '../../../lib/types';
-import { model } from '../state/model';
+import { getActiveTheme } from "../../../lib/config";
+import type { SamplingOptions } from "../../../lib/types";
+import { model } from "../state/model";
 
 /** Build sampling inputs from the current artwork controls and admin limits. */
 export function getSamplingOptions(): SamplingOptions {

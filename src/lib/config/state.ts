@@ -1,11 +1,11 @@
-import type { BrandTheme, StudioConfig, VisitorPermissions } from '../types';
+import type { BrandTheme, StudioConfig, VisitorPermissions } from "../types";
 
-export const STORAGE_KEY = 'white-label-pixel-studio-config-v1';
+export const STORAGE_KEY = "white-label-pixel-studio-config-v1";
 
 export const DEFAULT_THEME: BrandTheme = {
-  id: 'studio-default',
-  name: 'Studio palette',
-  colors: ['#F2C94C', '#56CCF2', '#2F80ED', '#9B51E0', '#EB5757', '#F2994A', '#6FCF97'],
+  id: "studio-default",
+  name: "Studio palette",
+  colors: ["#F2C94C", "#56CCF2", "#2F80ED", "#9B51E0", "#EB5757", "#F2994A", "#6FCF97"],
 };
 
 export const DEFAULT_PERMISSIONS: VisitorPermissions = {
@@ -18,15 +18,15 @@ export const DEFAULT_PERMISSIONS: VisitorPermissions = {
 };
 
 export const DEFAULT_CONFIG: StudioConfig = {
-  adminPin: '1234',
-  applicationTitle: 'Pixel Studio',
-  brandSignature: 'YOUR BRAND',
-  defaultMessage: 'MAKE\nSOMETHING\nMATTER.',
+  adminPin: "1234",
+  applicationTitle: "Pixel Studio",
+  brandSignature: "YOUR BRAND",
+  defaultMessage: "MAKE\nSOMETHING\nMATTER.",
   enforceTheme: true,
   fairMode: false,
-  cameraDeviceId: '',
-  messagePosition: 'upper',
-  logoPosition: 'lower',
+  cameraDeviceId: "",
+  messagePosition: "upper",
+  logoPosition: "lower",
   messagePositionLocked: true,
   logoPositionLocked: true,
   logoAssetId: null,

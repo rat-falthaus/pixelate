@@ -1,13 +1,13 @@
-import { getActiveTheme } from '../../../lib/config';
-import { mapClustersToTheme, sampleImage } from '../../../lib/sampling';
-import { elements } from '../dom/elements';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { notify } from '../ui/notify';
-import { fitArtboard } from '../viewport/fit-artboard';
-import { getSamplingOptions } from './get-sampling-options';
-import { renderArtwork } from './render-artwork';
-import { renderMapping } from './render-mapping';
+import { getActiveTheme } from "../../../lib/config";
+import { mapClustersToTheme, sampleImage } from "../../../lib/sampling";
+import { elements } from "../dom/elements";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { notify } from "../ui/notify";
+import { fitArtboard } from "../viewport/fit-artboard";
+import { getSamplingOptions } from "./get-sampling-options";
+import { renderArtwork } from "./render-artwork";
+import { renderMapping } from "./render-mapping";
 
 /** Resample the source image, preserve compatible palette mappings, and redraw the artwork. */
 export function rebuildArtwork(fit = false): void {
@@ -37,7 +37,7 @@ export function rebuildArtwork(fit = false): void {
     elements.gridCount.textContent = `${model.gridCols} × ${model.gridRows}`;
     if (fit) requestAnimationFrame(fitArtboard);
   } catch (error) {
-    console.error('Could not generate the pixel artwork.', error);
-    notify(error instanceof Error ? error.message : 'The image could not be processed.');
+    console.error("Could not generate the pixel artwork.", error);
+    notify(error instanceof Error ? error.message : "The image could not be processed.");
   }
 }

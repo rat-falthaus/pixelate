@@ -1,4 +1,4 @@
-import { elements } from '../dom/elements';
+import { elements } from "../dom/elements";
 
 /**
  * Crop and mirror a camera frame to the viewport aspect ratio at the requested height.
@@ -30,8 +30,8 @@ export function drawCameraFrame(
 
   canvas.width = Math.round(outputHeight * aspectRatio);
   canvas.height = outputHeight;
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('This browser could not prepare the camera image.');
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("This browser could not prepare the camera image.");
   context.save();
   context.translate(canvas.width, 0);
   context.scale(-1, 1);

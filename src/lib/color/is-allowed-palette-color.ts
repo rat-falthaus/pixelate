@@ -1,5 +1,5 @@
-import { hexToRgb } from './hex-to-rgb';
-import { luminance } from './luminance';
+import { hexToRgb } from "./hex-to-rgb";
+import { luminance } from "./luminance";
 
 /** Validate a six-digit palette color and reject near-black or near-white tones. */
 export function isAllowedPaletteColor(hex: string): boolean {

@@ -1,5 +1,5 @@
-import { escapeXml } from '../color';
-import type { GridBox } from './types';
+import { escapeXml } from "../color";
+import type { GridBox } from "./types";
 
 /** Render a prepared logo data URI within its grid-aligned SVG image bounds. */
 export function renderLogo(box: GridBox, tileSize: number, dataUrl: string): string {

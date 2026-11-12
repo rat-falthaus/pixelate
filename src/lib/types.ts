@@ -1,19 +1,19 @@
-import type { SubjectMask } from './recognition/types';
+import type { SubjectMask } from "./recognition/types";
 
-export type BackgroundMode = 'black' | 'white' | 'transparent';
-export type ToolMode = 'pan' | 'recolor' | 'subject';
-export type MaskBrushMode = 'keep' | 'background';
+export type BackgroundMode = "black" | "white" | "transparent";
+export type ToolMode = "pan" | "recolor" | "subject";
+export type MaskBrushMode = "keep" | "background";
 export type MessagePosition =
-  | 'upper'
-  | 'center'
-  | 'lower'
-  | 'topleft'
-  | 'topright'
-  | 'middleleft'
-  | 'middleright'
-  | 'bottomleft'
-  | 'bottomright';
-export type TileOverride = string | 'ERASE';
+  | "upper"
+  | "center"
+  | "lower"
+  | "topleft"
+  | "topright"
+  | "middleleft"
+  | "middleright"
+  | "bottomleft"
+  | "bottomright";
+export type TileOverride = string | "ERASE";
 export type ImageSource = HTMLImageElement | HTMLCanvasElement;
 
 export interface ArtworkSnapshot {

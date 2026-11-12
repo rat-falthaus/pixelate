@@ -4,11 +4,11 @@ export function escapeXml(value: string): string {
     /[&<>"']/g,
     (character) =>
       ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&apos;',
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&apos;",
       })[character]!,
   );
 }

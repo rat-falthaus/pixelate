@@ -1,4 +1,4 @@
-import type { RGB } from './types';
+import type { RGB } from "./types";
 
 /** Return the luminance-weighted squared distance between two RGB colors. */
 export function colorDistance(left: RGB, right: RGB): number {

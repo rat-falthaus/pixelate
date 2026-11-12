@@ -1,6 +1,6 @@
-import type { MessagePosition } from '../types';
-import { calculateOverlayOrigin } from './calculate-overlay-origin';
-import type { GridBox } from './types';
+import type { MessagePosition } from "../types";
+import { calculateOverlayOrigin } from "./calculate-overlay-origin";
+import type { GridBox } from "./types";
 
 /** Size a logo by grid width and aspect ratio, then constrain its placement to the canvas. */
 export function calculateLogoBox(

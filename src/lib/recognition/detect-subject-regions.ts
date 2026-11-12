@@ -1,5 +1,5 @@
-import { normalizeDetectionRegion } from './normalize-detection-region';
-import type { SubjectDetectors, SubjectRegion } from './types';
+import { normalizeDetectionRegion } from "./normalize-detection-region";
+import type { SubjectDetectors, SubjectRegion } from "./types";
 
 /** Locate segmentation prompts on an already bounded snapshot of the artwork source. */
 export function detectSubjectRegions(
@@ -19,7 +19,7 @@ export function detectSubjectRegions(
         canvas.width,
         canvas.height,
         category.score,
-        face ? 'face' : category.categoryName || 'object',
+        face ? "face" : category.categoryName || "object",
       );
       if (region) regions.push(region);
     }

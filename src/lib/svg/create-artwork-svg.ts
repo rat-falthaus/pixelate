@@ -1,14 +1,14 @@
-import { escapeXml, seededRandom } from '../color';
-import type { ArtworkOptions, TileOverride } from '../types';
-import { addTilePath } from './add-tile-path';
-import { calculateLogoBox } from './calculate-logo-box';
-import { calculateMessageBox } from './calculate-message-box';
-import { cellKey } from './cell-key';
-import { isInBox } from './is-in-box';
-import { renderLogo } from './render-logo';
-import { renderBrandText } from './render-brand-text';
-import { renderMessage } from './render-message';
-import type { SvgResult } from './types';
+import { escapeXml, seededRandom } from "../color";
+import type { ArtworkOptions, TileOverride } from "../types";
+import { addTilePath } from "./add-tile-path";
+import { calculateLogoBox } from "./calculate-logo-box";
+import { calculateMessageBox } from "./calculate-message-box";
+import { cellKey } from "./cell-key";
+import { isInBox } from "./is-in-box";
+import { renderLogo } from "./render-logo";
+import { renderBrandText } from "./render-brand-text";
+import { renderMessage } from "./render-message";
+import type { SvgResult } from "./types";
 
 /**
  * Generate a standalone mosaic SVG with grid-aligned overlays and export statistics.
@@ -78,8 +78,8 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     if (isInBox(cell.col, cell.row, messageBox) || isInBox(cell.col, cell.row, logoBox)) continue;
 
     let color: TileOverride | undefined = manualTileOverrides.get(key);
-    if (color === 'ERASE') continue;
-    if (typeof color !== 'string') {
+    if (color === "ERASE") continue;
+    if (typeof color !== "string") {
       if (enforceTheme) {
         const paletteIndex =
           !cell.isSubject && random() < backgroundScatter / 100
@@ -98,8 +98,8 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
   }
 
   for (const [key, color] of manualTileOverrides) {
-    if (occupied.has(key) || color === 'ERASE') continue;
-    const [col, row] = key.split(',').map(Number);
+    if (occupied.has(key) || color === "ERASE") continue;
+    const [col, row] = key.split(",").map(Number);
     if (!Number.isInteger(col) || !Number.isInteger(row)) continue;
     if (col < 0 || col >= grid.cols || row < 0 || row >= grid.rows) continue;
     if (isInBox(col, row, messageBox) || isInBox(col, row, logoBox)) continue;
@@ -107,8 +107,8 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
   }
 
   const pathMarkup: string[] = [];
-  if (includeBackground && (background === 'black' || background === 'white')) {
-    const color = background === 'black' ? '#080A09' : '#FFFFFF';
+  if (includeBackground && (background === "black" || background === "white")) {
+    const color = background === "black" ? "#080A09" : "#FFFFFF";
     pathMarkup.push(
       `<path id="canvas-background" fill="${color}" d="M0 0h${width}v${height}h-${width}Z"/>`,
     );
@@ -120,7 +120,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     colorPathIndex += 1;
     tileCount += commands.length;
     pathMarkup.push(
-      `<path id="tile-color-${colorPathIndex}" fill="${color}" d="${commands.join('')}"/>`,
+      `<path id="tile-color-${colorPathIndex}" fill="${color}" d="${commands.join("")}"/>`,
     );
   }
 
@@ -132,7 +132,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
       renderBrandText(logoBox, tileSize, brandSignature.trim(), background, fontFamily),
     );
   }
-  if (fontDataUri && fontFamily === 'BrandUploaded') {
+  if (fontDataUri && fontFamily === "BrandUploaded") {
     overlays.unshift(
       `<defs><style>@font-face{font-family:BrandUploaded;src:url('${escapeXml(fontDataUri)}')}#message-overlay text,#brand-signature text{font-family:BrandUploaded,Arial,sans-serif}</style></defs>`,
     );
@@ -141,12 +141,12 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
   const markup = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
     `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-labelledby="artwork-title artwork-description">`,
-    `<title id="artwork-title">${escapeXml(brandSignature || 'Pixel mosaic')}</title>`,
+    `<title id="artwork-title">${escapeXml(brandSignature || "Pixel mosaic")}</title>`,
     `<desc id="artwork-description">${description}</desc>`,
     ...pathMarkup,
     ...overlays,
-    '</svg>',
-  ].join('\n');
+    "</svg>",
+  ].join("\n");
 
   return {
     markup,

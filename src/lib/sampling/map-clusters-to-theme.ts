@@ -1,5 +1,5 @@
-import { colorDistance, hexToRgb } from '../color';
-import type { ColorCluster } from '../types';
+import { colorDistance, hexToRgb } from "../color";
+import type { ColorCluster } from "../types";
 
 /** Map photo clusters to nearby brand colors while discouraging repeated assignments. */
 export function mapClustersToTheme(clusters: ColorCluster[], colors: string[]): number[] {

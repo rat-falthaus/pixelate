@@ -1,6 +1,6 @@
-import { clusterFromRgb, colorDistance } from '../color';
-import type { ColorCluster, PhotoCell } from '../types';
-import { K_MEANS_ITERATIONS } from './state';
+import { clusterFromRgb, colorDistance } from "../color";
+import type { ColorCluster, PhotoCell } from "../types";
+import { K_MEANS_ITERATIONS } from "./state";
 
 /** Assign cells to deterministic RGB clusters and sort those clusters by luminance. */
 export function quantize(cells: PhotoCell[], requestedCount: number): ColorCluster[] {

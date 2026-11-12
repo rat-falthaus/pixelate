@@ -1,7 +1,7 @@
-import type { HandLandmarker } from '@mediapipe/tasks-vision';
-import type { GalleryFreeze } from '../../../lib/local-store';
-import type { SubjectDetectors } from '../../../lib/recognition';
-import type { ArtworkSnapshot } from '../../../lib/types';
+import type { HandLandmarker } from "@mediapipe/tasks-vision";
+import type { GalleryFreeze } from "../../../lib/local-store";
+import type { SubjectDetectors } from "../../../lib/recognition";
+import type { ArtworkSnapshot } from "../../../lib/types";
 
 /** Mutable browser resources and interaction state, shared by studio actions. */
 interface RuntimeState {

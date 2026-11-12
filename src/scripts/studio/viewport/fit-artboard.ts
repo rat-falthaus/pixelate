@@ -1,6 +1,6 @@
-import { elements } from '../dom/elements';
-import { model } from '../state/model';
-import { updateViewportTransform } from './update-viewport-transform';
+import { elements } from "../dom/elements";
+import { model } from "../state/model";
+import { updateViewportTransform } from "./update-viewport-transform";
 
 /** Cover the actual stage with centered artwork, without visitor-controlled zoom. */
 export function fitArtboard(): void {

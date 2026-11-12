@@ -1,5 +1,5 @@
-import { loadConfig } from '../../../lib/config';
-import type { AppModel } from '../../../lib/types';
+import { loadConfig } from "../../../lib/config";
+import type { AppModel } from "../../../lib/types";
 
 export const config = loadConfig();
 
@@ -8,10 +8,10 @@ export const model: AppModel = {
   config,
   image: null,
   subjectMask: null,
-  fileName: 'pixel-artwork',
+  fileName: "pixel-artwork",
   tileSize: 18,
   freeColorCount: 7,
-  background: 'black',
+  background: "black",
   includeBackground: true,
   subjectEnabled: true,
   subjectThreshold: 52,
@@ -27,7 +27,7 @@ export const model: AppModel = {
   messageScale: 100,
   logoDataUrl: null,
   logoAspectRatio: 1,
-  fontFamily: 'Arial, Helvetica, sans-serif',
+  fontFamily: "Arial, Helvetica, sans-serif",
   fontDataUri: null,
   showBadge: true,
   clusters: [],
@@ -39,10 +39,10 @@ export const model: AppModel = {
   manualSubjectMask: new Map(),
   manualTileOverrides: new Map(),
   tileUndoStack: [],
-  currentSvg: '',
-  tool: 'pan',
+  currentSvg: "",
+  tool: "pan",
   selectedBrush: config.themes[0].colors[0],
-  maskBrush: 'keep',
+  maskBrush: "keep",
   fitScale: 1,
   showOriginal: false,
   liveCameraActive: false,

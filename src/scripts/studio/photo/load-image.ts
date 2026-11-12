@@ -1,7 +1,7 @@
-import { stopLiveCamera } from '../camera/stop-live-camera';
-import { model } from '../state/model';
-import { setImageSource } from './set-image-source';
-import { analyzePhotoSubjects } from '../recognition/analyze-photo-subjects';
+import { stopLiveCamera } from "../camera/stop-live-camera";
+import { model } from "../state/model";
+import { setImageSource } from "./set-image-source";
+import { analyzePhotoSubjects } from "../recognition/analyze-photo-subjects";
 
 /**
  * Decode and validate a source image before replacing the current artwork.
@@ -19,14 +19,14 @@ export async function loadImage(
   await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve();
     image.onerror = () =>
-      reject(new Error('This image could not be decoded. Try a PNG, JPEG, WebP, or GIF image.'));
+      reject(new Error("This image could not be decoded. Try a PNG, JPEG, WebP, or GIF image."));
     image.src = source;
   });
   if (!image.naturalWidth || !image.naturalHeight) {
-    throw new Error('The selected image has no readable pixels.');
+    throw new Error("The selected image has no readable pixels.");
   }
   if (image.naturalWidth * image.naturalHeight > 40_000_000) {
-    throw new Error('This image is larger than 40 megapixels. Choose a smaller image.');
+    throw new Error("This image is larger than 40 megapixels. Choose a smaller image.");
   }
   model.subjectMask = null;
   setImageSource(image, fileName, sourceUrl ?? source);

@@ -78,21 +78,21 @@ Segmentation estimates object shapes; it is not pixel-perfect, especially for fi
 
 Each implementation file exports one named function, with a matching kebab-case filename and a JSDoc description of its responsibility. Short event callbacks remain beside the function that owns them; substantial pointer handlers have their own files. Data-only modules contain shared types, settings, or state rather than functions.
 
-| Directory             | Responsibility                                                             |
-| --------------------- | -------------------------------------------------------------------------- |
-| `studio/admin/`       | PIN gate, admin form application, palettes, and settings persistence       |
-| `studio/artwork/`     | Rendering, sampling inputs, color mapping, brushes, and undo               |
-| `studio/branding/`    | Logo validation/rasterization, font loading, and local brand assets        |
-| `studio/camera/`      | Camera streams, live rendering, gestures, countdown, and freeze lifecycle  |
-| `studio/dom/`         | Required-element lookup and the typed DOM element registry                 |
-| `studio/events/`      | Feature-specific listener registration and stage pointer handlers          |
-| `studio/gallery/`     | Saved portrait cards, selection, preview, sharing, and thumbnail URLs      |
-| `studio/photo/`       | Image decoding, file validation, and active image URL ownership            |
+| Directory             | Responsibility                                                                 |
+| --------------------- | ------------------------------------------------------------------------------ |
+| `studio/admin/`       | PIN gate, admin form application, palettes, and settings persistence           |
+| `studio/artwork/`     | Rendering, sampling inputs, color mapping, brushes, and undo                   |
+| `studio/branding/`    | Logo validation/rasterization, font loading, and local brand assets            |
+| `studio/camera/`      | Camera streams, live rendering, gestures, countdown, and freeze lifecycle      |
+| `studio/dom/`         | Required-element lookup and the typed DOM element registry                     |
+| `studio/events/`      | Feature-specific listener registration and stage pointer handlers              |
+| `studio/gallery/`     | Saved portrait cards, selection, preview, sharing, and thumbnail URLs          |
+| `studio/photo/`       | Image decoding, file validation, and active image URL ownership                |
 | `studio/recognition/` | Shared local model initialization, live silhouette updates, and photo analysis |
-| `studio/sharing/`     | PNG conversion, SVG exports, clipboard, and native sharing                 |
-| `studio/state/`       | Artwork/configuration model and transient browser resources                |
-| `studio/ui/`          | Initialization, notifications, kiosk status, and workspace permissions     |
-| `studio/viewport/`    | Automatic cover-fit transforms and drawer visibility                       |
+| `studio/sharing/`     | PNG conversion, SVG exports, clipboard, and native sharing                     |
+| `studio/state/`       | Artwork/configuration model and transient browser resources                    |
+| `studio/ui/`          | Initialization, notifications, kiosk status, and workspace permissions         |
+| `studio/viewport/`    | Automatic cover-fit transforms and drawer visibility                           |
 
 Initialization binds the events once, restores local assets/gallery data, and applies the workspace controls. Event binders call actions directly; actions use domain APIs for processing and persistence. The state and DOM modules do not import actions, preventing startup dependencies from running UI behavior before the page is initialized.
 

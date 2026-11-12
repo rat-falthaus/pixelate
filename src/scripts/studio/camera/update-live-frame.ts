@@ -1,12 +1,12 @@
-import { rebuildArtwork } from '../artwork/rebuild-artwork';
-import { elements } from '../dom/elements';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { drawCameraFrame } from './draw-camera-frame';
-import { updateSubjectMask } from '../recognition/update-subject-mask';
-import { updateCaptureGesture } from './update-capture-gesture';
-import { stopLiveCamera } from './stop-live-camera';
-import { notify } from '../ui/notify';
+import { rebuildArtwork } from "../artwork/rebuild-artwork";
+import { elements } from "../dom/elements";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { drawCameraFrame } from "./draw-camera-frame";
+import { updateSubjectMask } from "../recognition/update-subject-mask";
+import { updateCaptureGesture } from "./update-capture-gesture";
+import { stopLiveCamera } from "./stop-live-camera";
+import { notify } from "../ui/notify";
 
 /** Throttle live mosaic sampling and open-palm inference within the animation loop. */
 export function updateLiveFrame(timestamp: number): void {
@@ -27,10 +27,10 @@ export function updateLiveFrame(timestamp: number): void {
           rebuildArtwork(resized);
         }
       } catch (error) {
-        console.error('Live camera rendering stopped.', error);
+        console.error("Live camera rendering stopped.", error);
         stopLiveCamera(false);
         notify(
-          error instanceof Error ? error.message : 'The live camera could not provide a frame.',
+          error instanceof Error ? error.message : "The live camera could not provide a frame.",
         );
         return;
       }

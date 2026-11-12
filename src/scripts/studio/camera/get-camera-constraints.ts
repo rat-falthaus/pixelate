@@ -1,4 +1,4 @@
-import { model } from '../state/model';
+import { model } from "../state/model";
 
 /** Honor an explicitly selected input for both camera modes; never silently switch devices. */
 export function getCameraConstraints(): MediaStreamConstraints {
@@ -7,7 +7,7 @@ export function getCameraConstraints(): MediaStreamConstraints {
     video: {
       ...(model.config.cameraDeviceId
         ? { deviceId: { exact: model.config.cameraDeviceId } }
-        : { facingMode: 'user' }),
+        : { facingMode: "user" }),
       width: { ideal: 1280 },
       height: { ideal: 960 },
     },

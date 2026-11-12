@@ -1,6 +1,6 @@
-import assert from 'node:assert/strict';
-import { registerHooks } from 'node:module';
-import test from 'node:test';
+import assert from "node:assert/strict";
+import { registerHooks } from "node:module";
+import test from "node:test";
 
 registerHooks({
   resolve(specifier, context, nextResolve) {
@@ -8,8 +8,8 @@ registerHooks({
       return nextResolve(specifier, context);
     } catch (error) {
       if (
-        ['ERR_MODULE_NOT_FOUND', 'ERR_UNSUPPORTED_DIR_IMPORT'].includes(error.code) &&
-        specifier.startsWith('.') &&
+        ["ERR_MODULE_NOT_FOUND", "ERR_UNSUPPORTED_DIR_IMPORT"].includes(error.code) &&
+        specifier.startsWith(".") &&
         !/\.[a-z]+$/i.test(specifier)
       ) {
         return nextResolve(`${specifier}.ts`, context);
@@ -20,13 +20,13 @@ registerHooks({
 });
 
 const { normalizeDetectionRegion } =
-  await import('../src/lib/recognition/normalize-detection-region.ts');
-const { createMaskSaliency } = await import('../src/lib/recognition/create-mask-saliency.ts');
-const { segmentSubjectRegions } = await import('../src/lib/recognition/segment-subject-regions.ts');
-const { sampleImage } = await import('../src/lib/sampling/sample-image.ts');
-const { createArtworkSvg } = await import('../src/lib/svg/create-artwork-svg.ts');
-const { normalizeConfig } = await import('../src/lib/config/normalize-config.ts');
-const { isOpenPalm } = await import('../src/lib/gesture/is-open-palm.ts');
+  await import("../src/lib/recognition/normalize-detection-region.ts");
+const { createMaskSaliency } = await import("../src/lib/recognition/create-mask-saliency.ts");
+const { segmentSubjectRegions } = await import("../src/lib/recognition/segment-subject-regions.ts");
+const { sampleImage } = await import("../src/lib/sampling/sample-image.ts");
+const { createArtworkSvg } = await import("../src/lib/svg/create-artwork-svg.ts");
+const { normalizeConfig } = await import("../src/lib/config/normalize-config.ts");
+const { isOpenPalm } = await import("../src/lib/gesture/is-open-palm.ts");
 
 const openPalm = [
   [0, 0],
@@ -52,7 +52,7 @@ const openPalm = [
   [0.88, 1.75],
 ].map(([x, y]) => ({ x: 0.5 + x * 0.1, y: 0.8 - y * 0.1 }));
 
-test('open palms work at different sizes and rotations without accepting folded fingers', () => {
+test("open palms work at different sizes and rotations without accepting folded fingers", () => {
   for (const scale of [0.2, 0.6, 1.5]) {
     for (const angle of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) {
       for (const mirror of [-1, 1]) {
@@ -77,13 +77,13 @@ test('open palms work at different sizes and rotations without accepting folded 
   assert.equal(isOpenPalm(Array.from({ length: 21 }, () => ({ x: 0, y: 0 }))), false);
 });
 
-test('detections stay aligned when their input is a scaled, already mirrored/cropped canvas', () => {
+test("detections stay aligned when their input is a scaled, already mirrored/cropped canvas", () => {
   const region = normalizeDetectionRegion(
     { originX: 320, originY: -32, width: 400, height: 192, angle: 0 },
     640,
     320,
     0.9,
-    'person',
+    "person",
   );
   assert.deepEqual(region, {
     left: 0.5,
@@ -91,7 +91,7 @@ test('detections stay aligned when their input is a scaled, already mirrored/cro
     right: 1,
     bottom: 0.5,
     score: 0.9,
-    label: 'person',
+    label: "person",
   });
   assert.equal(
     normalizeDetectionRegion(
@@ -99,13 +99,13 @@ test('detections stay aligned when their input is a scaled, already mirrored/cro
       640,
       320,
       1,
-      'face',
+      "face",
     ),
     null,
   );
 });
 
-test('silhouette masks preserve internal holes and box corners, retrying a prompt that selected background', () => {
+test("silhouette masks preserve internal holes and box corners, retrying a prompt that selected background", () => {
   const confidence = new Float32Array(49);
   for (const [col, row] of [
     [3, 1],
@@ -125,7 +125,7 @@ test('silhouette masks preserve internal holes and box corners, retrying a promp
     right: 6 / 7,
     bottom: 6 / 7,
     score: 0.9,
-    label: 'object',
+    label: "object",
   };
   let calls = 0;
   const mask = segmentSubjectRegions({ width: 7, height: 7 }, [region], {
@@ -140,9 +140,9 @@ test('silhouette masks preserve internal holes and box corners, retrying a promp
   assert.equal(calls, 2);
   assert.deepEqual(mask.confidence, confidence);
   const saliency = createMaskSaliency(mask, 7, 7);
-  assert.equal(saliency[3 * 7 + 3], 0, 'the hole remains background');
-  assert.equal(saliency[1 * 7 + 1], 0, 'a box corner is not foreground');
-  assert.equal(saliency[3 * 7 + 1], 1, 'the actual outline is foreground');
+  assert.equal(saliency[3 * 7 + 3], 0, "the hole remains background");
+  assert.equal(saliency[1 * 7 + 1], 0, "a box corner is not foreground");
+  assert.equal(saliency[3 * 7 + 1], 1, "the actual outline is foreground");
   assert.deepEqual(
     [
       ...createMaskSaliency(
@@ -155,11 +155,11 @@ test('silhouette masks preserve internal holes and box corners, retrying a promp
   );
 });
 
-test('separate object masks are unioned without connecting their bounds; empty detections clear the mask', () => {
+test("separate object masks are unioned without connecting their bounds; empty detections clear the mask", () => {
   let calls = 0;
   const regions = [
-    { left: 0, top: 0, right: 0.4, bottom: 1, score: 0.9, label: 'object' },
-    { left: 0.6, top: 0, right: 1, bottom: 1, score: 0.9, label: 'object' },
+    { left: 0, top: 0, right: 0.4, bottom: 1, score: 0.9, label: "object" },
+    { left: 0.6, top: 0, right: 1, bottom: 1, score: 0.9, label: "object" },
   ];
   const segmenter = {
     segment(canvas, roi, callback) {
@@ -177,17 +177,17 @@ test('separate object masks are unioned without connecting their bounds; empty d
     mask.confidence.reduce((sum, value) => sum + value, 0),
     6,
   );
-  assert.equal(mask.confidence[2 * 5 + 2], 0, 'space between objects remains background');
+  assert.equal(mask.confidence[2 * 5 + 2], 0, "space between objects remains background");
   assert.deepEqual(
     [...segmentSubjectRegions({ width: 5, height: 5 }, [], segmenter).confidence],
     Array(25).fill(0),
   );
-  assert.equal(calls, 2, 'empty frames do not run the segmenter');
+  assert.equal(calls, 2, "empty frames do not run the segmenter");
 });
 
-test('overlapping objects are not skipped just because another silhouette covers their center', () => {
+test("overlapping objects are not skipped just because another silhouette covers their center", () => {
   let calls = 0;
-  const region = { left: 0, top: 0, right: 1, bottom: 1, score: 0.9, label: 'object' };
+  const region = { left: 0, top: 0, right: 1, bottom: 1, score: 0.9, label: "object" };
   const mask = segmentSubjectRegions({ width: 5, height: 5 }, [region, region], {
     segment(canvas, roi, callback) {
       const vertical = ++calls === 1;
@@ -206,7 +206,7 @@ test('overlapping objects are not skipped just because another silhouette covers
   assert.equal(mask.confidence[1 * 5 + 1], 0);
 });
 
-test('segmented subjects retain shadow/highlight details while background fill and manual masks still apply', () => {
+test("segmented subjects retain shadow/highlight details while background fill and manual masks still apply", () => {
   const previousDocument = globalThis.document;
   const previousImage = globalThis.HTMLImageElement;
   globalThis.HTMLImageElement = class {};
@@ -246,8 +246,8 @@ test('segmented subjects retain shadow/highlight details while background fill a
       colorCount: 2,
       randomSeed: 4219,
       manualSubjectMask: new Map([
-        ['0,0', false],
-        ['7,3', true],
+        ["0,0", false],
+        ["7,3", true],
       ]),
       subjectMask: {
         width: 8,
@@ -277,7 +277,7 @@ test('segmented subjects retain shadow/highlight details while background fill a
     assert.equal(
       sampleImage({ width: 80, height: 40 }, { ...options, subjectThreshold: 100 }).cells.length,
       16,
-      'maximum focus must not turn low-confidence background into foreground',
+      "maximum focus must not turn low-confidence background into foreground",
     );
   } finally {
     globalThis.document = previousDocument;
@@ -285,31 +285,31 @@ test('segmented subjects retain shadow/highlight details while background fill a
   }
 });
 
-test('uploaded logo replaces the text identity, and text fallback works without a message', () => {
+test("uploaded logo replaces the text identity, and text fallback works without a message", () => {
   const options = {
     grid: { cols: 40, rows: 30, cells: [], clusters: [], saliency: new Float32Array() },
     tileSize: 18,
-    theme: { id: 'test', name: 'Test', colors: ['#FFFFFF'] },
+    theme: { id: "test", name: "Test", colors: ["#FFFFFF"] },
     enforceTheme: true,
     clusterToTheme: [],
     manualTileOverrides: new Map(),
-    background: 'black',
+    background: "black",
     includeBackground: true,
     hairlines: false,
     backgroundScatter: 0,
     randomSeed: 1,
     messageEnabled: false,
-    message: '',
-    messagePosition: 'upper',
+    message: "",
+    messagePosition: "upper",
     messageOrigin: null,
     messageScale: 100,
-    brandSignature: 'Test & Brand',
+    brandSignature: "Test & Brand",
     showBadge: true,
     logoDataUrl: null,
     logoAspectRatio: 2,
-    logoPosition: 'lower',
+    logoPosition: "lower",
     logoOrigin: null,
-    fontFamily: 'Arial',
+    fontFamily: "Arial",
     fontDataUri: null,
   };
   const fallback = createArtworkSvg(options).markup;
@@ -317,27 +317,27 @@ test('uploaded logo replaces the text identity, and text fallback works without 
   assert.match(fallback, /<text[^>]+>Test &amp; Brand<\/text>/);
   const uploaded = createArtworkSvg({
     ...options,
-    logoDataUrl: 'data:image/png;base64,test',
+    logoDataUrl: "data:image/png;base64,test",
   }).markup;
   assert.match(uploaded, /<image data-draggable="logo"/);
   assert.doesNotMatch(uploaded, /id="brand-signature"|<text/);
   assert.doesNotMatch(
-    createArtworkSvg({ ...options, logoDataUrl: 'data:image/png;base64,test', showBadge: false })
+    createArtworkSvg({ ...options, logoDataUrl: "data:image/png;base64,test", showBadge: false })
       .markup,
     /data-draggable="logo"/,
   );
 });
 
-test('camera selection survives normalization and older configurations default to automatic', () => {
+test("camera selection survives normalization and older configurations default to automatic", () => {
   assert.equal(
-    normalizeConfig({ cameraDeviceId: 'external-camera' }).cameraDeviceId,
-    'external-camera',
+    normalizeConfig({ cameraDeviceId: "external-camera" }).cameraDeviceId,
+    "external-camera",
   );
-  assert.equal(normalizeConfig({ cameraDeviceId: 123 }).cameraDeviceId, '');
-  assert.equal(normalizeConfig({}).cameraDeviceId, '');
+  assert.equal(normalizeConfig({ cameraDeviceId: 123 }).cameraDeviceId, "");
+  assert.equal(normalizeConfig({}).cameraDeviceId, "");
 });
 
-test('free-palette background scatter preserves subject colors', () => {
+test("free-palette background scatter preserves subject colors", () => {
   const options = {
     grid: {
       cols: 40,
@@ -349,29 +349,29 @@ test('free-palette background scatter preserves subject colors', () => {
         isSubject: col === 0,
         clusterIndex: 0,
       })),
-      clusters: [{ hex: '#111111' }, { hex: '#EEEEEE' }],
+      clusters: [{ hex: "#111111" }, { hex: "#EEEEEE" }],
     },
     tileSize: 18,
-    theme: { colors: ['#FFFFFF'] },
+    theme: { colors: ["#FFFFFF"] },
     enforceTheme: false,
     clusterToTheme: [],
     manualTileOverrides: new Map(),
-    background: 'transparent',
+    background: "transparent",
     includeBackground: false,
     hairlines: false,
     randomSeed: 1,
     messageEnabled: false,
-    message: '',
-    messagePosition: 'upper',
+    message: "",
+    messagePosition: "upper",
     messageOrigin: null,
     messageScale: 100,
-    brandSignature: '',
+    brandSignature: "",
     showBadge: false,
     logoDataUrl: null,
     logoAspectRatio: 1,
-    logoPosition: 'lower',
+    logoPosition: "lower",
     logoOrigin: null,
-    fontFamily: 'Arial',
+    fontFamily: "Arial",
     fontDataUri: null,
   };
   assert.equal(createArtworkSvg({ ...options, backgroundScatter: 0 }).pathCount, 1);
@@ -381,7 +381,7 @@ test('free-palette background scatter preserves subject colors', () => {
   assert.match(scattered.markup, /fill="#111111" d="M0 0h18v18h-18Z/);
 });
 
-test('studio preserves positioning permissions, camera lifecycle, and gesture countdown state', async () => {
+test("studio preserves positioning permissions, camera lifecycle, and gesture countdown state", async () => {
   const previous = {
     document: globalThis.document,
     localStorage: globalThis.localStorage,
@@ -417,12 +417,12 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
       addEventListener() {},
     };
   };
-  const messageButtons = ['upper', 'lower'].map((position) => {
+  const messageButtons = ["upper", "lower"].map((position) => {
     const button = makeElement();
     button.dataset.position = position;
     return button;
   });
-  const logoButtons = ['upper', 'lower'].map((position) => {
+  const logoButtons = ["upper", "lower"].map((position) => {
     const button = makeElement();
     button.dataset.logoPosition = position;
     return button;
@@ -440,8 +440,8 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
     createElement: makeElement,
     querySelector: () => null,
     querySelectorAll: (selector) => {
-      if (selector === '[data-position]') return messageButtons;
-      if (selector === '[data-logo-position]') return logoButtons;
+      if (selector === "[data-position]") return messageButtons;
+      if (selector === "[data-logo-position]") return logoButtons;
       return [];
     },
     fullscreenElement: {},
@@ -473,45 +473,45 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
   globalThis.requestAnimationFrame = () => 0;
   globalThis.cancelAnimationFrame = () => {};
   try {
-    const { model } = await import('../src/scripts/studio/state/model.ts');
-    const { runtime } = await import('../src/scripts/studio/state/runtime.ts');
-    const { updateLiveUi } = await import('../src/scripts/studio/ui/update-live-ui.ts');
+    const { model } = await import("../src/scripts/studio/state/model.ts");
+    const { runtime } = await import("../src/scripts/studio/state/runtime.ts");
+    const { updateLiveUi } = await import("../src/scripts/studio/ui/update-live-ui.ts");
     const { applyWorkspaceSettings } =
-      await import('../src/scripts/studio/ui/apply-workspace-settings.ts');
+      await import("../src/scripts/studio/ui/apply-workspace-settings.ts");
     const savedModel = { ...model };
     const savedRuntime = { ...runtime };
     try {
       model.config = { ...model.config, fairMode: false };
       updateLiveUi();
-      assert.equal(nodes.get('studio-live-camera').textContent, 'Start live camera');
-      assert.ok(nodes.get('studio-stop-live').classList.contains('is-hidden'));
+      assert.equal(nodes.get("studio-live-camera").textContent, "Start live camera");
+      assert.ok(nodes.get("studio-stop-live").classList.contains("is-hidden"));
       assert.ok(messageButtons.every((button) => !button.disabled));
       assert.ok(logoButtons.every((button) => !button.disabled));
-      assert.equal(nodes.get('logo-section').classList.contains('is-hidden'), false);
-      model.messagePosition = 'lower';
+      assert.equal(nodes.get("logo-section").classList.contains("is-hidden"), false);
+      model.messagePosition = "lower";
       updateLiveUi();
-      assert.equal(messageButtons[0].classList.contains('is-selected'), false);
-      assert.equal(messageButtons[1].classList.contains('is-selected'), true);
-      assert.equal(messageButtons[1].attributes.get('aria-pressed'), 'true');
+      assert.equal(messageButtons[0].classList.contains("is-selected"), false);
+      assert.equal(messageButtons[1].classList.contains("is-selected"), true);
+      assert.equal(messageButtons[1].attributes.get("aria-pressed"), "true");
 
       let stopped = 0;
       model.liveCameraActive = true;
       runtime.liveCameraStream = { getTracks: () => [{ stop: () => stopped++ }] };
-      document.body.classList.add('fair-mode');
+      document.body.classList.add("fair-mode");
       applyWorkspaceSettings();
       assert.equal(model.liveCameraActive, true);
       assert.equal(stopped, 0);
       assert.equal(
         fullscreenExits,
         1,
-        'leaving fair mode exits its fullscreen without stopping video',
+        "leaving fair mode exits its fullscreen without stopping video",
       );
-      assert.equal(nodes.get('studio-live-camera').textContent, 'Snap & freeze');
-      assert.equal(nodes.get('studio-stop-live').classList.contains('is-hidden'), false);
+      assert.equal(nodes.get("studio-live-camera").textContent, "Snap & freeze");
+      assert.equal(nodes.get("studio-stop-live").classList.contains("is-hidden"), false);
       assert.equal(
-        nodes.get('compare-photo').disabled,
+        nodes.get("compare-photo").disabled,
         true,
-        'do not compare live video with a stale still',
+        "do not compare live video with a stale still",
       );
 
       document.fullscreenElement = {};
@@ -519,7 +519,7 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
       assert.equal(
         fullscreenExits,
         1,
-        'normal settings preserve independently requested fullscreen',
+        "normal settings preserve independently requested fullscreen",
       );
       assert.equal(model.liveCameraActive, true);
       assert.equal(fullscreenRequests, 0);
@@ -527,13 +527,13 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
       document.fullscreenElement = null;
       model.config.fairMode = true;
       applyWorkspaceSettings();
-      assert.equal(fullscreenRequests, 1, 'entering fair mode can expand the existing live stream');
+      assert.equal(fullscreenRequests, 1, "entering fair mode can expand the existing live stream");
       assert.equal(model.liveCameraActive, true);
       assert.equal(stopped, 0);
 
       assert.ok(messageButtons.every((button) => button.disabled));
       assert.ok(logoButtons.every((button) => button.disabled));
-      assert.equal(nodes.get('logo-section').classList.contains('is-hidden'), true);
+      assert.equal(nodes.get("logo-section").classList.contains("is-hidden"), true);
       model.config.messagePositionLocked = false;
       updateLiveUi();
       assert.ok(messageButtons.every((button) => !button.disabled));
@@ -542,28 +542,28 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
       model.liveCameraActive = false;
       runtime.liveCameraStarting = true;
       updateLiveUi();
-      assert.equal(nodes.get('studio-live-camera').disabled, true);
-      assert.equal(nodes.get('studio-stop-live').classList.contains('is-hidden'), false);
+      assert.equal(nodes.get("studio-live-camera").disabled, true);
+      assert.equal(nodes.get("studio-stop-live").classList.contains("is-hidden"), false);
 
       const { updateCaptureGesture } =
-        await import('../src/scripts/studio/camera/update-capture-gesture.ts');
-      const { stopLiveCamera } = await import('../src/scripts/studio/camera/stop-live-camera.ts');
+        await import("../src/scripts/studio/camera/update-capture-gesture.ts");
+      const { stopLiveCamera } = await import("../src/scripts/studio/camera/stop-live-camera.ts");
       const { cancelFreezeCountdown } =
-        await import('../src/scripts/studio/camera/cancel-freeze-countdown.ts');
+        await import("../src/scripts/studio/camera/cancel-freeze-countdown.ts");
       let hands = [[], openPalm];
       runtime.handLandmarker = { detectForVideo: () => ({ landmarks: hands }) };
       runtime.liveCameraStarting = false;
       model.liveCameraActive = true;
-      nodes.get('live-camera-video').readyState = 2;
+      nodes.get("live-camera-video").readyState = 2;
       updateCaptureGesture(1000);
       updateCaptureGesture(1600);
-      assert.equal(runtime.gestureCountdownTimer, 0, 'a brief palm does not capture');
+      assert.equal(runtime.gestureCountdownTimer, 0, "a brief palm does not capture");
       updateCaptureGesture(1700);
       const firstCountdown = runtime.gestureCountdownTimer;
-      assert.ok(firstCountdown > 0, 'an open second hand starts the countdown');
-      assert.equal(nodes.get('gesture-count').textContent, '3');
+      assert.ok(firstCountdown > 0, "an open second hand starts the countdown");
+      assert.equal(nodes.get("gesture-count").textContent, "3");
       intervals.get(firstCountdown)();
-      assert.equal(nodes.get('gesture-count').textContent, '2');
+      assert.equal(nodes.get("gesture-count").textContent, "2");
       stopLiveCamera(false);
       assert.equal(runtime.gestureCountdownTimer, 0);
       assert.equal(intervals.has(firstCountdown), false);
@@ -571,17 +571,17 @@ test('studio preserves positioning permissions, camera lifecycle, and gesture co
       model.liveCameraActive = true;
       updateCaptureGesture(2000);
       updateCaptureGesture(2800);
-      assert.ok(runtime.gestureCountdownTimer > 0, 'capture works after stopping mid-countdown');
+      assert.ok(runtime.gestureCountdownTimer > 0, "capture works after stopping mid-countdown");
       cancelFreezeCountdown();
       updateCaptureGesture(4000);
       updateCaptureGesture(5000);
-      assert.equal(runtime.gestureCountdownTimer, 0, 'one held palm cannot repeatedly capture');
+      assert.equal(runtime.gestureCountdownTimer, 0, "one held palm cannot repeatedly capture");
       hands = [];
       updateCaptureGesture(5100);
       hands = [openPalm];
       updateCaptureGesture(5200);
       updateCaptureGesture(5900);
-      assert.ok(runtime.gestureCountdownTimer > 0, 'lowering the hand rearms gesture capture');
+      assert.ok(runtime.gestureCountdownTimer > 0, "lowering the hand rearms gesture capture");
       stopLiveCamera(false);
     } finally {
       Object.assign(model, savedModel);

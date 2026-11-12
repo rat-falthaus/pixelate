@@ -1,9 +1,9 @@
-import { elements } from '../dom/elements';
-import { getElement } from '../dom/get-element';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { rebuildArtwork } from './rebuild-artwork';
-import { renderArtwork } from './render-artwork';
+import { elements } from "../dom/elements";
+import { getElement } from "../dom/get-element";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { rebuildArtwork } from "./rebuild-artwork";
+import { renderArtwork } from "./render-artwork";
 
 /** Translate screen coordinates into a grid cell and apply the active paint or mask brush. */
 export function paintAt(clientX: number, clientY: number): void {
@@ -14,8 +14,8 @@ export function paintAt(clientX: number, clientY: number): void {
   if (col < 0 || col >= model.gridCols || row < 0 || row >= model.gridRows) return;
   const key = `${col},${row}`;
 
-  if (model.tool === 'subject') {
-    const keep = model.maskBrush === 'keep';
+  if (model.tool === "subject") {
+    const keep = model.maskBrush === "keep";
     if (model.manualSubjectMask.get(key) === keep) return;
     model.manualSubjectMask.set(key, keep);
     runtime.pendingSubjectEdit = true;
@@ -28,7 +28,7 @@ export function paintAt(clientX: number, clientY: number): void {
         }
       });
     }
-    getElement('reset-mask').classList.remove('is-hidden');
+    getElement("reset-mask").classList.remove("is-hidden");
     return;
   }
 

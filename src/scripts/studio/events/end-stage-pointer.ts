@@ -1,5 +1,5 @@
-import { elements } from '../dom/elements';
-import { runtime } from '../state/runtime';
+import { elements } from "../dom/elements";
+import { runtime } from "../state/runtime";
 
 /** End a stage gesture and clear transient drag and paint state. */
 export function endStagePointer(): void {

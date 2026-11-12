@@ -1,13 +1,13 @@
-import { paintAt } from '../artwork/paint-at';
-import { saveTileUndoSnapshot } from '../artwork/save-tile-undo-snapshot';
-import { elements } from '../dom/elements';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { isPositionLocked } from '../../../lib/config';
+import { paintAt } from "../artwork/paint-at";
+import { saveTileUndoSnapshot } from "../artwork/save-tile-undo-snapshot";
+import { elements } from "../dom/elements";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { isPositionLocked } from "../../../lib/config";
 
 /** Start artwork dragging or painting without intercepting interactive controls. */
 export function handleStagePointerDown(event: PointerEvent): void {
-  if (event.button !== 0 && event.pointerType === 'mouse') return;
+  if (event.button !== 0 && event.pointerType === "mouse") return;
   const target = event.target;
   if (
     target instanceof Element &&
@@ -20,8 +20,8 @@ export function handleStagePointerDown(event: PointerEvent): void {
   if (
     messageTarget &&
     model.messageEnabled &&
-    !isPositionLocked(model.config, 'message') &&
-    model.tool === 'pan'
+    !isPositionLocked(model.config, "message") &&
+    model.tool === "pan"
   ) {
     const rect = elements.artboard.getBoundingClientRect();
     const pointerCol = Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols);
@@ -33,10 +33,10 @@ export function handleStagePointerDown(event: PointerEvent): void {
     };
     runtime.messageDragOffset = { col: pointerCol - origin.col, row: pointerRow - origin.row };
     elements.stage.setPointerCapture(event.pointerId);
-    elements.stage.dataset.draggingMessage = 'true';
+    elements.stage.dataset.draggingMessage = "true";
     return;
   }
-  if (logoTarget && !isPositionLocked(model.config, 'logo') && model.tool === 'pan') {
+  if (logoTarget && !isPositionLocked(model.config, "logo") && model.tool === "pan") {
     const rect = elements.artboard.getBoundingClientRect();
     const pointerCol = Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols);
     const pointerRow = Math.floor(((event.clientY - rect.top) / rect.height) * model.gridRows);
@@ -47,12 +47,12 @@ export function handleStagePointerDown(event: PointerEvent): void {
     };
     runtime.logoDragOffset = { col: pointerCol - origin.col, row: pointerRow - origin.row };
     elements.stage.setPointerCapture(event.pointerId);
-    elements.stage.dataset.draggingLogo = 'true';
+    elements.stage.dataset.draggingLogo = "true";
     return;
   }
   elements.stage.setPointerCapture(event.pointerId);
-  if (model.tool === 'recolor' || model.tool === 'subject') {
-    if (model.tool === 'recolor') saveTileUndoSnapshot();
+  if (model.tool === "recolor" || model.tool === "subject") {
+    if (model.tool === "recolor") saveTileUndoSnapshot();
     runtime.painting = true;
     paintAt(event.clientX, event.clientY);
   }

@@ -1,11 +1,11 @@
-import type { GalleryFreeze } from '../../../lib/local-store';
-import { readBlobAsDataUrl } from '../branding/read-blob-as-data-url';
-import { elements } from '../dom/elements';
-import { revokeActiveImageUrl } from '../photo/revoke-active-image-url';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { updateLiveUi } from '../ui/update-live-ui';
-import { fitArtboard } from '../viewport/fit-artboard';
+import type { GalleryFreeze } from "../../../lib/local-store";
+import { readBlobAsDataUrl } from "../branding/read-blob-as-data-url";
+import { elements } from "../dom/elements";
+import { revokeActiveImageUrl } from "../photo/revoke-active-image-url";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { updateLiveUi } from "../ui/update-live-ui";
+import { fitArtboard } from "../viewport/fit-artboard";
 
 /** Present a saved PNG unchanged; return false if a newer source/deletion cancels its pending load. */
 export async function renderGalleryPreview(
@@ -24,7 +24,7 @@ export async function renderGalleryPreview(
   runtime.activeImageUrl = url;
   runtime.previewFreeze = freeze;
   model.image = image;
-  model.fileName = 'saved-portrait';
+  model.fileName = "saved-portrait";
   model.showOriginal = false;
   model.gridCols = image.naturalWidth / model.tileSize;
   model.gridRows = image.naturalHeight / model.tileSize;
@@ -37,10 +37,10 @@ export async function renderGalleryPreview(
   elements.originalPhoto.src = url;
   elements.originalPhoto.hidden = true;
   elements.comparePhoto.disabled = true;
-  elements.comparePhoto.textContent = 'Saved portrait';
-  document.querySelector('.artwork-stats')?.classList.add('is-hidden');
+  elements.comparePhoto.textContent = "Saved portrait";
+  document.querySelector(".artwork-stats")?.classList.add("is-hidden");
   elements.sourceThumb.src = url;
-  elements.fileName.textContent = 'Saved portrait (unchanged)';
+  elements.fileName.textContent = "Saved portrait (unchanged)";
   elements.sourceDimensions.textContent = `${image.naturalWidth} × ${image.naturalHeight}`;
   updateLiveUi();
   requestAnimationFrame(fitArtboard);

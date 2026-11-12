@@ -1,11 +1,11 @@
-import { getActiveTheme } from '../../../lib/config';
-import { createArtworkSvg } from '../../../lib/svg';
-import { elements } from '../dom/elements';
-import { getElement } from '../dom/get-element';
-import { model } from '../state/model';
-import { runtime } from '../state/runtime';
-import { renderUndoControls } from '../ui/render-undo-controls';
-import { fitArtboard } from '../viewport/fit-artboard';
+import { getActiveTheme } from "../../../lib/config";
+import { createArtworkSvg } from "../../../lib/svg";
+import { elements } from "../dom/elements";
+import { getElement } from "../dom/get-element";
+import { model } from "../state/model";
+import { runtime } from "../state/runtime";
+import { renderUndoControls } from "../ui/render-undo-controls";
+import { fitArtboard } from "../viewport/fit-artboard";
 
 /** Generate the current SVG, replace the preview, and update export statistics. */
 export function renderArtwork(): void {
@@ -39,25 +39,25 @@ export function renderArtwork(): void {
     logoAspectRatio: model.logoAspectRatio,
     logoPosition: model.config.logoPosition,
     logoOrigin: model.logoOrigin,
-    fontFamily: model.config.useUploadedFont ? model.fontFamily : 'Arial, Helvetica, sans-serif',
+    fontFamily: model.config.useUploadedFont ? model.fontFamily : "Arial, Helvetica, sans-serif",
     fontDataUri: model.config.useUploadedFont ? model.fontDataUri : null,
   });
   model.currentSvg = result.markup;
   elements.svgOutput.innerHTML = result.markup;
-  elements.svgOutput.setAttribute('aria-label', `Artwork with ${result.tileCount} colored tiles`);
+  elements.svgOutput.setAttribute("aria-label", `Artwork with ${result.tileCount} colored tiles`);
   elements.svgOutput.style.width = `${model.gridCols * model.tileSize}px`;
   elements.svgOutput.style.height = `${model.gridRows * model.tileSize}px`;
-  const svg = elements.svgOutput.querySelector('svg');
+  const svg = elements.svgOutput.querySelector("svg");
   if (svg) {
-    svg.style.display = 'block';
-    svg.style.width = '100%';
-    svg.style.height = '100%';
+    svg.style.display = "block";
+    svg.style.width = "100%";
+    svg.style.height = "100%";
   }
   elements.artboard.style.width = `${model.gridCols * model.tileSize}px`;
   elements.artboard.style.height = `${model.gridRows * model.tileSize}px`;
-  getElement('stat-tiles').textContent = result.tileCount.toLocaleString();
-  getElement('stat-paths').textContent = result.pathCount.toLocaleString();
-  getElement('stat-size').textContent = `${Math.max(1, Math.round(result.byteCount / 1024))} KB`;
+  getElement("stat-tiles").textContent = result.tileCount.toLocaleString();
+  getElement("stat-paths").textContent = result.pathCount.toLocaleString();
+  getElement("stat-size").textContent = `${Math.max(1, Math.round(result.byteCount / 1024))} KB`;
   renderUndoControls();
   fitArtboard();
 }

@@ -1,4 +1,4 @@
-import { runtime } from '../state/runtime';
+import { runtime } from "../state/runtime";
 
 /** Release thumbnail URLs before replacing the gallery DOM. */
 export function revokeGalleryObjectUrls(): void {

@@ -3,8 +3,8 @@ export function transactionComplete(transaction: IDBTransaction): Promise<void> 
   return new Promise((resolve, reject) => {
     transaction.oncomplete = () => resolve();
     transaction.onerror = () =>
-      reject(transaction.error ?? new Error('Local storage transaction failed.'));
+      reject(transaction.error ?? new Error("Local storage transaction failed."));
     transaction.onabort = () =>
-      reject(transaction.error ?? new Error('Local storage transaction was aborted.'));
+      reject(transaction.error ?? new Error("Local storage transaction was aborted."));
   });
 }

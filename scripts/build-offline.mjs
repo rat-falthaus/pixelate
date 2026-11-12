@@ -1,37 +1,44 @@
-import { createHash } from 'node:crypto';
-import { readdir, readFile, writeFile } from 'node:fs/promises';
-import { join, relative, sep } from 'node:path';
-import { basePath } from '../site.config.mjs';
+import { createHash } from "node:crypto";
+import { readdir, readFile, writeFile } from "node:fs/promises";
+import { join, relative, sep } from "node:path";
+import { basePath } from "../site.config.mjs";
 
-const outputDirectory = 'dist';
-const serviceWorkerPath = join(outputDirectory, 'sw.js');
-const manifestPath = join(outputDirectory, 'precache-manifest.json');
-const baseUrl = `${basePath.replace(/\/+$/, '')}/`;
+const outputDirectory = "dist";
+const serviceWorkerPath = join(outputDirectory, "sw.js");
+const manifestPath = join(outputDirectory, "precache-manifest.json");
+const baseUrl = `${basePath.replace(/\/+$/, "")}/`;
 
 async function findFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
-  const files = await Promise.all(entries.map(async (entry) => {
-    const path = join(directory, entry.name);
-    return entry.isDirectory() ? findFiles(path) : [path];
-  }));
+  const files = await Promise.all(
+    entries.map(async (entry) => {
+      const path = join(directory, entry.name);
+      return entry.isDirectory() ? findFiles(path) : [path];
+    }),
+  );
   return files.flat();
 }
 
 const files = (await findFiles(outputDirectory))
   .filter((path) => path !== serviceWorkerPath && path !== manifestPath)
   .sort();
-const hash = createHash('sha256');
+const hash = createHash("sha256");
 for (const file of files) {
-  hash.update(relative(outputDirectory, file).split(sep).join('/'));
+  hash.update(relative(outputDirectory, file).split(sep).join("/"));
   hash.update(await readFile(file));
 }
-const cacheName = `pixelate-${hash.digest('hex').slice(0, 16)}`;
-const urls = [...new Set([baseUrl, ...files.map((file) => (
-  `${baseUrl}${relative(outputDirectory, file).split(sep).join('/')}`
-))])];
+const cacheName = `pixelate-${hash.digest("hex").slice(0, 16)}`;
+const urls = [
+  ...new Set([
+    baseUrl,
+    ...files.map((file) => `${baseUrl}${relative(outputDirectory, file).split(sep).join("/")}`),
+  ]),
+];
 
 await writeFile(manifestPath, `${JSON.stringify(urls, null, 2)}\n`);
-await writeFile(serviceWorkerPath, `const CACHE_NAME = '${cacheName}';
+await writeFile(
+  serviceWorkerPath,
+  `const CACHE_NAME = '${cacheName}';
 const BASE_URL = '${baseUrl}';
 const PRECACHE_URLS = ${JSON.stringify(urls)};
 
@@ -79,4 +86,5 @@ self.addEventListener('fetch', (event) => {
     }
   })());
 });
-`);
+`,
+);

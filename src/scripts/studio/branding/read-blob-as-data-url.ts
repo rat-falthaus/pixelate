@@ -3,11 +3,11 @@ export function readBlobAsDataUrl(blob: Blob): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => {
-      if (typeof reader.result === 'string') resolve(reader.result);
-      else reject(new Error('The local brand asset could not be read.'));
+      if (typeof reader.result === "string") resolve(reader.result);
+      else reject(new Error("The local brand asset could not be read."));
     };
     reader.onerror = () =>
-      reject(reader.error ?? new Error('The local brand asset could not be read.'));
+      reject(reader.error ?? new Error("The local brand asset could not be read."));
     reader.readAsDataURL(blob);
   });
 }

@@ -1,4 +1,4 @@
-import type { GridBox } from './types';
+import type { GridBox } from "./types";
 
 /** Test whether a grid cell falls within an optional overlay rectangle. */
 export function isInBox(col: number, row: number, box: GridBox | null): boolean {

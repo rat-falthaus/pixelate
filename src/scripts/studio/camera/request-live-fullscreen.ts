@@ -1,4 +1,4 @@
-import { model } from '../state/model';
+import { model } from "../state/model";
 
 /** Request fullscreen only for fair mode; callers provide feedback when it is unavailable. */
 export async function requestLiveFullscreen(): Promise<boolean> {

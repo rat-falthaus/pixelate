@@ -1,7 +1,7 @@
-import type { InteractiveSegmenterLegacy } from '@mediapipe/tasks-vision';
-import { createMaskSaliency } from './create-mask-saliency';
-import { isSubjectMask } from './is-subject-mask';
-import type { SubjectMask, SubjectRegion } from './types';
+import type { InteractiveSegmenterLegacy } from "@mediapipe/tasks-vision";
+import { createMaskSaliency } from "./create-mask-saliency";
+import { isSubjectMask } from "./is-subject-mask";
+import type { SubjectMask, SubjectRegion } from "./types";
 
 /** Union learned object silhouettes, never their bounds; reuse coverage for nested face/object prompts. */
 export function segmentSubjectRegions(
@@ -22,10 +22,10 @@ export function segmentSubjectRegions(
     const height = region.bottom - region.top;
     const center = { x: region.left + width / 2, y: region.top + height / 2 };
     const face =
-      region.label === 'person'
+      region.label === "person"
         ? regions.find(
             (candidate) =>
-              candidate.label === 'face' &&
+              candidate.label === "face" &&
               candidate.left >= region.left &&
               candidate.right <= region.right &&
               candidate.top >= region.top &&
@@ -53,7 +53,7 @@ export function segmentSubjectRegions(
       segmenter.segment(canvas, { keypoint: point }, (result) => {
         // This MagicTouch task exposes one foreground mask, not the raw model's two channels.
         const foreground = result.confidenceMasks?.[0];
-        if (!foreground) throw new Error('The silhouette model did not return a foreground mask.');
+        if (!foreground) throw new Error("The silhouette model did not return a foreground mask.");
         const candidate: SubjectMask = {
           width: foreground.width,
           height: foreground.height,

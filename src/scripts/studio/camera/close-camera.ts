@@ -1,5 +1,5 @@
-import { elements } from '../dom/elements';
-import { runtime } from '../state/runtime';
+import { elements } from "../dom/elements";
+import { runtime } from "../state/runtime";
 
 /** Stop the still-camera tracks and close its preview dialog. */
 export function closeCamera(): void {
