@@ -7,6 +7,7 @@ export const config = loadConfig();
 export const model: AppModel = {
   config,
   image: null,
+  subjectRegions: null,
   fileName: 'pixel-artwork',
   tileSize: 18,
   freeColorCount: 7,
@@ -42,9 +43,7 @@ export const model: AppModel = {
   tool: 'pan',
   selectedBrush: config.themes[0].colors[0],
   maskBrush: 'keep',
-  zoom: 1,
-  panX: 0,
-  panY: 0,
+  fitScale: 1,
   showOriginal: false,
   liveCameraActive: false,
   freezePreview: false,

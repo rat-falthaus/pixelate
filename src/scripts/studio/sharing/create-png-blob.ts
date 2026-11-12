@@ -1,11 +1,14 @@
-import { model } from '../state/model';
+import type { ArtworkSnapshot } from '../../../lib/types';
+import { getExportSnapshot } from './get-export-snapshot';
 
 /** Rasterize the current standalone SVG to PNG, limiting its longest edge to 4096 pixels. */
-export async function createPngBlob(): Promise<Blob> {
-  if (!model.image || !model.currentSvg) throw new Error('There is no artwork to export yet.');
+export async function createPngBlob(
+  snapshot: ArtworkSnapshot = getExportSnapshot(),
+): Promise<Blob> {
+  if (snapshot.pngBlob) return snapshot.pngBlob;
   const image = new Image();
   const svgUrl = URL.createObjectURL(
-    new Blob([model.currentSvg], { type: 'image/svg+xml;charset=utf-8' }),
+    new Blob([snapshot.svg], { type: 'image/svg+xml;charset=utf-8' }),
   );
   try {
     await new Promise<void>((resolve, reject) => {
@@ -13,13 +16,10 @@ export async function createPngBlob(): Promise<Blob> {
       image.onerror = () => reject(new Error('The SVG could not be prepared as an image.'));
       image.src = svgUrl;
     });
-    const scale = Math.min(
-      1,
-      4096 / Math.max(model.gridCols * model.tileSize, model.gridRows * model.tileSize),
-    );
+    const scale = Math.min(1, 4096 / Math.max(snapshot.width, snapshot.height));
     const canvas = document.createElement('canvas');
-    canvas.width = Math.max(1, Math.round(model.gridCols * model.tileSize * scale));
-    canvas.height = Math.max(1, Math.round(model.gridRows * model.tileSize * scale));
+    canvas.width = Math.max(1, Math.round(snapshot.width * scale));
+    canvas.height = Math.max(1, Math.round(snapshot.height * scale));
     const context = canvas.getContext('2d');
     if (!context) throw new Error('This browser could not prepare the PNG image.');
     context.drawImage(image, 0, 0, canvas.width, canvas.height);

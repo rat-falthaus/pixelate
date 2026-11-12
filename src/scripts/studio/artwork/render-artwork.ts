@@ -3,11 +3,13 @@ import { createArtworkSvg } from '../../../lib/svg';
 import { elements } from '../dom/elements';
 import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
+import { runtime } from '../state/runtime';
 import { renderUndoControls } from '../ui/render-undo-controls';
-import { updateViewportTransform } from '../viewport/update-viewport-transform';
+import { fitArtboard } from '../viewport/fit-artboard';
 
 /** Generate the current SVG, replace the preview, and update export statistics. */
 export function renderArtwork(): void {
+  if (!model.image || runtime.previewFreeze) return;
   const result = createArtworkSvg({
     grid: {
       cols: model.gridCols,
@@ -57,5 +59,5 @@ export function renderArtwork(): void {
   getElement('stat-paths').textContent = result.pathCount.toLocaleString();
   getElement('stat-size').textContent = `${Math.max(1, Math.round(result.byteCount / 1024))} KB`;
   renderUndoControls();
-  updateViewportTransform();
+  fitArtboard();
 }

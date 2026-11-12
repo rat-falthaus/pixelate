@@ -11,6 +11,11 @@ import { revokeActiveImageUrl } from './revoke-active-image-url';
 /** Install a decoded source image, reset image-specific edits, and rebuild its preview. */
 export function setImageSource(image: ImageSource, fileName: string, previewUrl?: string): void {
   revokeActiveImageUrl();
+  runtime.previewFreeze = null;
+  runtime.galleryPreviewRequest += 1;
+  runtime.pendingGalleryPreviewId = null;
+  elements.comparePhoto.disabled = false;
+  document.querySelector('.artwork-stats')?.classList.remove('is-hidden');
   runtime.activeImageUrl = previewUrl?.startsWith('blob:') ? previewUrl : null;
   model.image = image;
   model.fileName = fileName.replace(/\.[^.]+$/, '') || 'pixel-artwork';

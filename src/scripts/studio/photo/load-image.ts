@@ -1,6 +1,7 @@
 import { stopLiveCamera } from '../camera/stop-live-camera';
 import { model } from '../state/model';
 import { setImageSource } from './set-image-source';
+import { analyzePhotoSubjects } from '../recognition/analyze-photo-subjects';
 
 /**
  * Decode and validate a source image before replacing the current artwork.
@@ -27,5 +28,7 @@ export async function loadImage(
   if (image.naturalWidth * image.naturalHeight > 40_000_000) {
     throw new Error('This image is larger than 40 megapixels. Choose a smaller image.');
   }
+  model.subjectRegions = null;
   setImageSource(image, fileName, sourceUrl ?? source);
+  void analyzePhotoSubjects(image);
 }

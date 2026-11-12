@@ -14,7 +14,7 @@ export function setTool(tool: ToolMode): void {
   elements.maskBrushes.classList.toggle('is-hidden', tool !== 'subject');
   elements.brushSwatches.classList.toggle('is-hidden', tool === 'subject');
   const hints: Record<ToolMode, string> = {
-    pan: 'Drag to move · Scroll to zoom',
+    pan: 'Position unlocked text or logo',
     recolor: 'Tap or drag across tiles to recolor',
     subject: 'Paint areas to keep as subject or scatter as background',
   };

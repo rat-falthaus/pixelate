@@ -5,6 +5,7 @@ import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
 import { notify } from '../ui/notify';
 import { rasterizeLogo } from './rasterize-logo';
+import { renderBrandIdentity } from './render-brand-identity';
 import { sanitizeSvgLogo } from './sanitize-svg-logo';
 
 /** Rasterize and persist an uploaded logo, then replace the previous stored asset. */
@@ -32,6 +33,7 @@ export async function uploadLogo(file: File): Promise<void> {
   const preview = getElement('setting-logo-preview') as HTMLImageElement;
   preview.src = raster.dataUrl;
   preview.classList.remove('is-hidden');
+  renderBrandIdentity();
   renderArtwork();
   notify('Brand logo saved on this device.');
 }

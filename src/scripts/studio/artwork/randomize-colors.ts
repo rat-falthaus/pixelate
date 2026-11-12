@@ -1,11 +1,16 @@
 import { getActiveTheme } from '../../../lib/config';
 import { model } from '../state/model';
+import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
 import { renderArtwork } from './render-artwork';
 import { renderMapping } from './render-mapping';
 
 /** Shuffle the cluster-to-palette mapping and regenerate the background pattern. */
 export function randomizeColors(): void {
+  if (runtime.previewFreeze) {
+    notify('Saved portraits stay unchanged. Return to live or open a photo to choose new colors.');
+    return;
+  }
   if (!model.clusters.length) {
     notify('Take a photo before choosing new colors.');
     return;

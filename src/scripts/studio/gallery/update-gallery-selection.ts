@@ -6,4 +6,5 @@ export function updateGallerySelection(): void {
   const count = runtime.selectedGalleryIds.size;
   getElement('gallery-selection-count').textContent = `${count} selected`;
   (getElement('gallery-share') as HTMLButtonElement).disabled = count === 0;
+  (getElement('gallery-remove') as HTMLButtonElement).disabled = count === 0;
 }

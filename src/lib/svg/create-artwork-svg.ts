@@ -1,13 +1,13 @@
 import { escapeXml, seededRandom } from '../color';
 import type { ArtworkOptions, TileOverride } from '../types';
 import { addTilePath } from './add-tile-path';
-import { calculateBadgeBox } from './calculate-badge-box';
 import { calculateLogoBox } from './calculate-logo-box';
 import { calculateMessageBox } from './calculate-message-box';
 import { cellKey } from './cell-key';
 import { isInBox } from './is-in-box';
 import { renderLogo } from './render-logo';
-import { renderMessageAndBadge } from './render-message-and-badge';
+import { renderBrandText } from './render-brand-text';
+import { renderMessage } from './render-message';
 import type { SvgResult } from './types';
 
 /**
@@ -55,12 +55,15 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
         messageOrigin,
       )
     : null;
-  const logoBox = logoDataUrl
-    ? calculateLogoBox(grid.cols, grid.rows, logoPosition, logoOrigin, logoAspectRatio)
-    : null;
-  const badgeBox =
-    messageBox && showBadge && brandSignature.trim()
-      ? calculateBadgeBox(messageBox, grid.cols, grid.rows)
+  const logoBox =
+    showBadge && (logoDataUrl || brandSignature.trim())
+      ? calculateLogoBox(
+          grid.cols,
+          grid.rows,
+          logoPosition,
+          logoOrigin,
+          logoDataUrl ? logoAspectRatio : 4,
+        )
       : null;
   const pathsByColor = new Map<string, string[]>();
   const occupied = new Set<string>();
@@ -72,12 +75,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
   for (const cell of grid.cells) {
     const key = cellKey(cell.col, cell.row);
     occupied.add(key);
-    if (
-      isInBox(cell.col, cell.row, messageBox) ||
-      isInBox(cell.col, cell.row, badgeBox) ||
-      isInBox(cell.col, cell.row, logoBox)
-    )
-      continue;
+    if (isInBox(cell.col, cell.row, messageBox) || isInBox(cell.col, cell.row, logoBox)) continue;
 
     let color: TileOverride | undefined = manualTileOverrides.get(key);
     if (color === 'ERASE') continue;
@@ -89,7 +87,11 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
             : (clusterToTheme[cell.clusterIndex] ?? 0) % theme.colors.length;
         color = theme.colors[paletteIndex] ?? theme.colors[0];
       } else {
-        color = grid.clusters[cell.clusterIndex]?.hex ?? theme.colors[0];
+        const clusterIndex =
+          !cell.isSubject && random() < backgroundScatter / 100
+            ? Math.floor(random() * grid.clusters.length)
+            : cell.clusterIndex;
+        color = grid.clusters[clusterIndex]?.hex ?? theme.colors[0];
       }
     }
     if (color) addTilePath(pathsByColor, color, cell.col, cell.row, tileSize, gap, drawnTileSize);
@@ -100,8 +102,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     const [col, row] = key.split(',').map(Number);
     if (!Number.isInteger(col) || !Number.isInteger(row)) continue;
     if (col < 0 || col >= grid.cols || row < 0 || row >= grid.rows) continue;
-    if (isInBox(col, row, messageBox) || isInBox(col, row, badgeBox) || isInBox(col, row, logoBox))
-      continue;
+    if (isInBox(col, row, messageBox) || isInBox(col, row, logoBox)) continue;
     addTilePath(pathsByColor, color, col, row, tileSize, gap, drawnTileSize);
   }
 
@@ -123,17 +124,13 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     );
   }
 
-  const overlays = renderMessageAndBadge(
-    messageBox,
-    badgeBox,
-    tileSize,
-    background,
-    message,
-    brandSignature,
-    fontFamily,
-  );
+  const overlays = renderMessage(messageBox, tileSize, background, message, fontFamily);
   if (logoBox && logoDataUrl) {
     overlays.push(renderLogo(logoBox, tileSize, logoDataUrl));
+  } else if (logoBox) {
+    overlays.push(
+      renderBrandText(logoBox, tileSize, brandSignature.trim(), background, fontFamily),
+    );
   }
   if (fontDataUri && fontFamily === 'BrandUploaded') {
     overlays.unshift(

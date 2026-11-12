@@ -1,13 +1,14 @@
 import type { GalleryFreeze } from '../../../lib/local-store';
 import { getElement } from '../dom/get-element';
-import { setImageSource } from '../photo/set-image-source';
-import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
 import { updateLiveUi } from '../ui/update-live-ui';
+import { renderGalleryPreview } from './render-gallery-preview';
 
 /** Decode a stored portrait for stage preview while retaining ownership of its object URL. */
 export async function previewGalleryFreeze(freeze: GalleryFreeze): Promise<void> {
+  const request = ++runtime.galleryPreviewRequest;
+  runtime.pendingGalleryPreviewId = freeze.id;
   const url = URL.createObjectURL(freeze.blob);
   const image = new Image();
   let retainedUrl = false;
@@ -17,19 +18,16 @@ export async function previewGalleryFreeze(freeze: GalleryFreeze): Promise<void>
       image.onerror = () => reject(new Error('This saved portrait could not be opened.'));
       image.src = url;
     });
+    if (request !== runtime.galleryPreviewRequest) return;
+    retainedUrl = await renderGalleryPreview(freeze, image, url, request);
+    if (!retainedUrl) return;
     getElement('gallery-overlay').classList.add('is-hidden');
-    if (model.liveCameraActive) {
-      window.clearTimeout(runtime.freezePreviewTimer);
-      model.freezePreview = true;
-      setImageSource(image, 'gallery-portrait.png', url);
-      updateLiveUi();
-    } else {
-      setImageSource(image, 'gallery-portrait.png', url);
-    }
-    retainedUrl = true;
+    updateLiveUi();
   } catch (error) {
-    notify(error instanceof Error ? error.message : 'The saved portrait could not be opened.');
+    if (request === runtime.galleryPreviewRequest)
+      notify(error instanceof Error ? error.message : 'The saved portrait could not be opened.');
   } finally {
     if (!retainedUrl) URL.revokeObjectURL(url);
+    if (request === runtime.galleryPreviewRequest) runtime.pendingGalleryPreviewId = null;
   }
 }

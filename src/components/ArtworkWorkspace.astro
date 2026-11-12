@@ -2,7 +2,7 @@
   <div class="live-toolbar" id="live-toolbar">
     <div class="live-brand">
       <span class="live-indicator" id="live-indicator"></span>
-      <div><strong id="live-brand-title">Pixel Studio</strong><small id="live-status">Fair portrait studio</small></div>
+      <div><img id="live-brand-logo" class="identity-logo is-hidden" alt="" /><strong id="live-brand-title">YOUR BRAND</strong><small id="live-status">Fair portrait studio</small></div>
     </div>
     <div class="live-actions">
       <button class="button live-secondary" id="live-camera" type="button" aria-label="Start a new portrait">◎ <span id="live-camera-label">New portrait</span></button>
@@ -22,13 +22,6 @@
     </div>
     <div class="view-tools">
       <button class="button button-small button-quiet" id="compare-photo" type="button">Compare photo</button>
-      <div class="zoom-control" aria-label="Zoom controls">
-        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
-        <input id="zoom-slider" type="range" min="15" max="400" value="100" aria-label="Zoom level" />
-        <output id="zoom-value">100%</output>
-        <button type="button" id="zoom-in" aria-label="Zoom in">＋</button>
-        <button class="fit-button" id="zoom-fit" type="button">Fit</button>
-      </div>
     </div>
   </div>
   <div class="artboard-stage" id="stage">
@@ -48,11 +41,11 @@
         <img id="original-photo" alt="Original photo comparison" hidden />
       </div>
     </div>
-    <div class="stage-hint"><span class="hint-dot" id="hint-dot"></span><span id="hint-text">Drag to move · Scroll to zoom</span></div>
+    <div class="stage-hint"><span class="hint-dot" id="hint-dot"></span><span id="hint-text">Position unlocked text or logo</span></div>
     <div class="live-camera-prompt is-hidden" id="live-camera-prompt">
       <div class="live-prompt-card">
         <span class="live-prompt-mark" aria-hidden="true">◎</span>
-        <p class="eyebrow">Welcome to <span id="live-prompt-brand">Pixel Studio</span></p>
+        <p class="eyebrow">Welcome to <img id="live-prompt-logo" class="identity-logo prompt-identity-logo is-hidden" alt="" /><span id="live-prompt-brand">YOUR BRAND</span></p>
         <h2 id="live-prompt-title">Ready for your pixel portrait?</h2>
         <p id="live-prompt-copy">Step in front of the camera. Your live mosaic stays right here on this device.</p>
         <div class="live-prompt-actions">

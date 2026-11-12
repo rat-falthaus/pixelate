@@ -1,3 +1,5 @@
+import { elements } from '../dom/elements';
+
 /**
  * Crop and mirror a camera frame to the viewport aspect ratio at the requested height.
  * @param video Ready camera video; its source pixels are never uploaded.
@@ -11,10 +13,8 @@ export function drawCameraFrame(
   outputHeight: number,
 ): boolean {
   if (!video.videoWidth || !video.videoHeight) return false;
-  const aspectRatio = Math.max(
-    0.5,
-    Math.min(3, window.innerWidth / Math.max(1, window.innerHeight)),
-  );
+  const bounds = elements.stage.getBoundingClientRect();
+  const aspectRatio = bounds.width / Math.max(1, bounds.height);
   const sourceAspectRatio = video.videoWidth / video.videoHeight;
   let sx = 0;
   let sy = 0;

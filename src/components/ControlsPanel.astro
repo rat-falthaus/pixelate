@@ -30,6 +30,7 @@
         </label>
       </div>
       <div class="control-stack" id="subject-controls">
+        <p class="privacy-note" id="recognition-status" role="status">Face and object recognition starts when a photo or camera is used.</p>
         <label class="range-control">
           <span><span>Subject focus</span><output id="subject-threshold-value">52%</output></span>
           <input id="subject-threshold" type="range" min="10" max="90" value="52" />
@@ -83,7 +84,7 @@ MATTER.</textarea>
           <span><span>Type scale</span><output id="message-scale-value">100%</output></span>
           <input id="message-scale" type="range" min="60" max="150" value="100" />
         </label>
-        <label class="inline-check"><input id="show-badge" type="checkbox" checked /><span>Show brand signature</span></label>
+        <label class="inline-check"><input id="show-badge" type="checkbox" checked /><span>Show brand identity</span></label>
       </div>
     </section>
 
@@ -135,7 +136,7 @@ MATTER.</textarea>
         </div>
       </div>
       <div class="segmented tool-switch" aria-label="Canvas tool">
-        <button type="button" data-tool="pan" class="is-selected">Move</button>
+        <button type="button" data-tool="pan" class="is-selected">Position</button>
         <button type="button" data-tool="recolor">Recolor</button>
         <button type="button" data-tool="subject">Mask</button>
       </div>

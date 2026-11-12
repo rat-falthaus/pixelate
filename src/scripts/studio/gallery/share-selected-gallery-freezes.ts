@@ -1,10 +1,10 @@
-import { deleteGalleryFreeze, listGalleryFreezes } from '../../../lib/local-store';
+import { listGalleryFreezes } from '../../../lib/local-store';
 import { getElement } from '../dom/get-element';
 import { downloadBlob } from '../sharing/download-blob';
 import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
-import { refreshGallery } from './refresh-gallery';
+import { removeGalleryFreezes } from './remove-gallery-freezes';
 
 /** Share selected PNGs and schedule cleanup only after native sharing succeeds. */
 export async function shareSelectedGalleryFreezes(): Promise<void> {
@@ -44,15 +44,7 @@ export async function shareSelectedGalleryFreezes(): Promise<void> {
     if (model.config.clearGalleryAfterShare) {
       const ids = selected.map((freeze) => freeze.id);
       window.setTimeout(() => {
-        void Promise.all(ids.map((id) => deleteGalleryFreeze(id)))
-          .then(() => {
-            ids.forEach((id) => runtime.selectedGalleryIds.delete(id));
-            return refreshGallery();
-          })
-          .catch((error: unknown) => {
-            console.error('Shared gallery portraits could not be removed.', error);
-            notify('Shared portraits could not be removed from local storage.');
-          });
+        void removeGalleryFreezes(ids);
       }, model.config.galleryClearDelaySeconds * 1000);
     }
   } catch (error) {

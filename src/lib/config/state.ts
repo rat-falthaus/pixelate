@@ -24,6 +24,7 @@ export const DEFAULT_CONFIG: StudioConfig = {
   defaultMessage: 'MAKE\nSOMETHING\nMATTER.',
   enforceTheme: true,
   fairMode: false,
+  cameraDeviceId: '',
   messagePosition: 'upper',
   logoPosition: 'lower',
   messagePositionLocked: true,

@@ -1,3 +1,5 @@
+import type { SubjectRegion } from './recognition/types';
+
 export type BackgroundMode = 'black' | 'white' | 'transparent';
 export type ToolMode = 'pan' | 'recolor' | 'subject';
 export type MaskBrushMode = 'keep' | 'background';
@@ -13,6 +15,15 @@ export type MessagePosition =
   | 'bottomright';
 export type TileOverride = string | 'ERASE';
 export type ImageSource = HTMLImageElement | HTMLCanvasElement;
+
+export interface ArtworkSnapshot {
+  svg: string;
+  width: number;
+  height: number;
+  fileName: string;
+  pngBlob: Blob | null;
+  galleryFreezeId: string | null;
+}
 
 export interface BrandTheme {
   id: string;
@@ -36,6 +47,7 @@ export interface StudioConfig {
   defaultMessage: string;
   enforceTheme: boolean;
   fairMode: boolean;
+  cameraDeviceId: string;
   messagePosition: MessagePosition;
   logoPosition: MessagePosition;
   messagePositionLocked: boolean;
@@ -91,6 +103,7 @@ export interface SamplingOptions {
   colorCount: number;
   randomSeed: number;
   manualSubjectMask: Map<string, boolean>;
+  subjectRegions: SubjectRegion[] | null;
 }
 
 export interface ArtworkOptions {
@@ -123,6 +136,7 @@ export interface ArtworkOptions {
 export interface AppModel {
   config: StudioConfig;
   image: ImageSource | null;
+  subjectRegions: SubjectRegion[] | null;
   fileName: string;
   tileSize: number;
   freeColorCount: number;
@@ -158,9 +172,7 @@ export interface AppModel {
   tool: ToolMode;
   selectedBrush: TileOverride;
   maskBrush: MaskBrushMode;
-  zoom: number;
-  panX: number;
-  panY: number;
+  fitScale: number;
   showOriginal: boolean;
   liveCameraActive: boolean;
   freezePreview: boolean;

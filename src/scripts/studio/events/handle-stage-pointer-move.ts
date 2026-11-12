@@ -3,9 +3,8 @@ import { renderArtwork } from '../artwork/render-artwork';
 import { elements } from '../dom/elements';
 import { model } from '../state/model';
 import { runtime } from '../state/runtime';
-import { updateViewportTransform } from '../viewport/update-viewport-transform';
 
-/** Continue grid-snapped overlay dragging, brush painting, or viewport panning. */
+/** Continue grid-snapped overlay dragging or touch/mouse painting, never image panning. */
 export function handleStagePointerMove(event: PointerEvent): void {
   if (elements.stage.dataset.draggingMessage === 'true') {
     const rect = elements.artboard.getBoundingClientRect();
@@ -38,10 +37,5 @@ export function handleStagePointerMove(event: PointerEvent): void {
   if (runtime.painting) {
     paintAt(event.clientX, event.clientY);
     return;
-  }
-  if (runtime.pointerStart && model.tool === 'pan') {
-    model.panX = runtime.pointerStart.panX + event.clientX - runtime.pointerStart.x;
-    model.panY = runtime.pointerStart.panY + event.clientY - runtime.pointerStart.y;
-    updateViewportTransform();
   }
 }

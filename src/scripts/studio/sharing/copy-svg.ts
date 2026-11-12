@@ -1,5 +1,6 @@
 import { model } from '../state/model';
 import { notify } from '../ui/notify';
+import { getExportSnapshot } from './get-export-snapshot';
 
 /** Copy the current SVG using the Clipboard API or the legacy text-selection fallback. */
 export async function copySvg(): Promise<void> {
@@ -8,11 +9,12 @@ export async function copySvg(): Promise<void> {
     return;
   }
   try {
+    const snapshot = getExportSnapshot(true);
     if (navigator.clipboard?.writeText) {
-      await navigator.clipboard.writeText(model.currentSvg);
+      await navigator.clipboard.writeText(snapshot.svg);
     } else {
       const textArea = document.createElement('textarea');
-      textArea.value = model.currentSvg;
+      textArea.value = snapshot.svg;
       textArea.style.position = 'fixed';
       textArea.style.opacity = '0';
       document.body.append(textArea);

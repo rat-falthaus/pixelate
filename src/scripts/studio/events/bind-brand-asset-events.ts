@@ -3,12 +3,24 @@ import { persistSettings } from '../admin/persist-settings';
 import { renderArtwork } from '../artwork/render-artwork';
 import { uploadFont } from '../branding/upload-font';
 import { uploadLogo } from '../branding/upload-logo';
+import { renderBrandIdentity } from '../branding/render-brand-identity';
 import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
 import { notify } from '../ui/notify';
+import type { MessagePosition } from '../../../lib/types';
+import { updateLiveUi } from '../ui/update-live-ui';
 
 /** Connect admin logo and font uploads and asset-removal controls. */
 export function bindBrandAssetEvents(): void {
+  document.querySelectorAll<HTMLButtonElement>('[data-logo-position]').forEach((button) => {
+    button.addEventListener('click', () => {
+      if (model.config.logoPositionLocked) return;
+      model.config.logoPosition = button.dataset.logoPosition as MessagePosition;
+      model.logoOrigin = null;
+      renderArtwork();
+      updateLiveUi();
+    });
+  });
   getElement('setting-logo-file').addEventListener('change', () => {
     const file = (getElement('setting-logo-file') as HTMLInputElement).files?.[0];
     if (file)
@@ -38,6 +50,7 @@ export function bindBrandAssetEvents(): void {
     persistSettings();
     (getElement('setting-logo-preview') as HTMLImageElement).removeAttribute('src');
     getElement('setting-logo-preview').classList.add('is-hidden');
+    renderBrandIdentity();
     renderArtwork();
   });
   getElement('remove-font').addEventListener('click', () => {

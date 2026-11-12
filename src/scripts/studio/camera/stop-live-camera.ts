@@ -5,10 +5,13 @@ import { model } from '../state/model';
 import { runtime } from '../state/runtime';
 import { updateLiveUi } from '../ui/update-live-ui';
 import { drawCameraFrame } from './draw-camera-frame';
+import { updateSubjectRegions } from '../recognition/update-subject-regions';
 
 /** Cancel live capture resources, optionally retaining a higher-resolution frozen frame. */
 export function stopLiveCamera(freeze: boolean): void {
-  const shouldFreeze = freeze && model.liveCameraActive;
+  runtime.liveCameraRequest += 1;
+  runtime.liveCameraStarting = false;
+  const shouldFreeze = freeze && model.liveCameraActive && !model.freezePreview;
   let frozenFrame: HTMLCanvasElement | null = null;
   if (shouldFreeze && runtime.liveFrameCanvas && elements.liveCameraVideo.videoWidth) {
     frozenFrame = document.createElement('canvas');
@@ -30,6 +33,7 @@ export function stopLiveCamera(freeze: boolean): void {
   runtime.liveFrameCanvas = null;
 
   if (frozenFrame) {
+    updateSubjectRegions(frozenFrame);
     setImageSource(frozenFrame, `portrait-${new Date().toISOString().slice(0, 10)}.png`);
   } else if (!freeze) {
     model.image = null;

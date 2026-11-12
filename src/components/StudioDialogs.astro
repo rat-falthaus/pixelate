@@ -27,6 +27,10 @@
         <div class="settings-intro"><h3>Experience</h3><p>Choose whether visitors can adjust technical and brand controls.</p></div>
         <label class="settings-toggle"><span><strong>Lock to brand palette</strong><small>Map all image tones to the active brand colors.</small></span><input id="setting-lock-palette" type="checkbox" checked /></label>
         <label class="settings-toggle"><span><strong>Fair / kiosk mode</strong><small>Hide studio-only controls and limit visitor options.</small></span><input id="setting-fair-mode" type="checkbox" /></label>
+        <label class="field-label">Camera
+          <select id="setting-camera" class="text-input"><option value="">Automatic / front camera</option></select>
+        </label>
+        <p class="fine-print" id="camera-device-help">Start a camera once to reveal device names. Selection applies to live and still capture.</p>
       </section>
 
       <section class="settings-card">
@@ -84,7 +88,7 @@
       </section>
 
       <section class="settings-card">
-        <div class="settings-intro"><h3>Pixel rules</h3><p>Dark and bright cells become negative-space cutouts. Tile gaps are optional.</p></div>
+        <div class="settings-intro"><h3>Pixel rules</h3><p>Cutouts apply to heuristic subjects. Recognized subjects retain highlights and shadows for clarity. Tile gaps are optional.</p></div>
         <label class="range-control">
           <span><span>Dark cutout threshold</span><output id="dark-cutoff-value">20%</output></span>
           <input id="setting-dark-cutoff" type="range" min="0" max="60" value="20" />
@@ -125,6 +129,7 @@
     <div class="gallery-empty" id="gallery-empty">Your captured portraits will appear here.</div>
     <div class="gallery-footer">
       <span class="muted-copy" id="gallery-selection-count">0 selected</span>
+      <button class="button button-danger" id="gallery-remove" type="button" disabled>Remove all selected</button>
       <button class="button button-primary" id="gallery-share" type="button" disabled>Share selected</button>
     </div>
   </div>
@@ -164,7 +169,6 @@
   </div>
 </dialog>
 
-<div class="drawer-backdrop" id="drawer-backdrop"></div>
 <video id="live-camera-video" class="live-camera-video" autoplay playsinline muted aria-hidden="true"></video>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <canvas id="sampling-canvas" hidden></canvas>

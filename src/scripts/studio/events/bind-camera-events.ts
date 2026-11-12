@@ -8,6 +8,8 @@ import { startLiveCamera } from '../camera/start-live-camera';
 import { getElement } from '../dom/get-element';
 import { openGallery } from '../gallery/open-gallery';
 import { shareSelectedGalleryFreezes } from '../gallery/share-selected-gallery-freezes';
+import { removeGalleryFreezes } from '../gallery/remove-gallery-freezes';
+import { runtime } from '../state/runtime';
 import { capturePhoto } from '../ui/capture-photo';
 
 /** Connect still-camera, live-camera, and gallery toolbar actions. */
@@ -24,5 +26,9 @@ export function bindCameraEvents(): void {
     getElement('gallery-overlay').classList.add('is-hidden'),
   );
   getElement('gallery-share').addEventListener('click', () => void shareSelectedGalleryFreezes());
+  getElement('gallery-remove').addEventListener(
+    'click',
+    () => void removeGalleryFreezes([...runtime.selectedGalleryIds]),
+  );
   getElement('return-to-live').addEventListener('click', returnToLive);
 }

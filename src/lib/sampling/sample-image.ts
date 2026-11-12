@@ -4,6 +4,7 @@ import { applyContrast } from './apply-contrast';
 import { createSaliencyMap } from './create-saliency-map';
 import { quantize } from './quantize';
 import { MAX_GRID_EDGE } from './state';
+import { createRegionSaliency } from '../recognition/create-region-saliency';
 
 /**
  * Samples a browser-decoded image into square cells, estimates foreground
@@ -45,12 +46,16 @@ export function sampleImage(image: ImageSource, options: SamplingOptions): Sampl
     brightness[index] = luminance({ r: red[index], g: green[index], b: blue[index] });
   }
 
-  const saliency = createSaliencyMap(red, green, blue, brightness, cols, rows);
+  const recognized = options.subjectRegions !== null;
+  const saliency =
+    options.subjectRegions === null
+      ? createSaliencyMap(red, green, blue, brightness, cols, rows)
+      : createRegionSaliency(options.subjectRegions, cols, rows);
   const random = seededRandom(options.randomSeed);
   const minBrightness = (options.darkCutoffPercent / 100) * 255;
   const maxBrightness = (options.lightCutoffPercent / 100) * 255;
   const subjectCutoff = 1 - options.subjectThreshold / 100;
-  const contrastFactor = 1 + (options.subjectContrast / 100) * 2.4;
+  const contrastFactor = 1 + (options.subjectContrast / 100) * (recognized ? 0.6 : 2.4);
   const cells: PhotoCell[] = [];
 
   for (let row = 0; row < rows; row += 1) {
@@ -74,7 +79,8 @@ export function sampleImage(image: ImageSource, options: SamplingOptions): Sampl
 
       const pixelLuminance = luminance({ r, g, b });
       if (isSubject) {
-        if (pixelLuminance < minBrightness || pixelLuminance > maxBrightness) continue;
+        if (!recognized && (pixelLuminance < minBrightness || pixelLuminance > maxBrightness))
+          continue;
       } else if (random() > options.backgroundDensity / 100) {
         continue;
       }

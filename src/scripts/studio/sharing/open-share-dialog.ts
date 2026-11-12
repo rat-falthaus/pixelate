@@ -1,15 +1,16 @@
-import { stopLiveCamera } from '../camera/stop-live-camera';
 import { elements } from '../dom/elements';
 import { model } from '../state/model';
 import { notify } from '../ui/notify';
+import { runtime } from '../state/runtime';
+import { getExportSnapshot } from './get-export-snapshot';
 
-/** Freeze live artwork when necessary and reveal supported export and sharing options. */
+/** Keep live video running while sharing a fixed snapshot of the selected artwork. */
 export function openShareDialog(): void {
   if (!model.image || !model.currentSvg) {
     notify('Take a photo or choose one before sharing.');
     return;
   }
-  if (model.liveCameraActive) stopLiveCamera(true);
+  runtime.shareSnapshot = getExportSnapshot();
   elements.shareNative.hidden = typeof navigator.share !== 'function';
   elements.shareDialog.showModal();
 }

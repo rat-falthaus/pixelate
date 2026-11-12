@@ -2,6 +2,7 @@ import { getActiveTheme } from '../../../lib/config';
 import { mapClustersToTheme, sampleImage } from '../../../lib/sampling';
 import { elements } from '../dom/elements';
 import { model } from '../state/model';
+import { runtime } from '../state/runtime';
 import { notify } from '../ui/notify';
 import { fitArtboard } from '../viewport/fit-artboard';
 import { getSamplingOptions } from './get-sampling-options';
@@ -10,7 +11,7 @@ import { renderMapping } from './render-mapping';
 
 /** Resample the source image, preserve compatible palette mappings, and redraw the artwork. */
 export function rebuildArtwork(fit = false): void {
-  if (!model.image) return;
+  if (!model.image || runtime.previewFreeze) return;
   try {
     const previousMapping = model.clusterToTheme;
     const sampled = sampleImage(model.image, getSamplingOptions());

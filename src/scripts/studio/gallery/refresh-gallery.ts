@@ -1,14 +1,18 @@
 import { listGalleryFreezes } from '../../../lib/local-store';
-import { elements } from '../dom/elements';
 import { getElement } from '../dom/get-element';
 import { runtime } from '../state/runtime';
 import { previewGalleryFreeze } from './preview-gallery-freeze';
 import { revokeGalleryObjectUrls } from './revoke-gallery-object-urls';
 import { updateGallerySelection } from './update-gallery-selection';
+import { removeGalleryFreezes } from './remove-gallery-freezes';
 
 /** Reload saved portraits and rebuild selectable, draggable gallery cards. */
 export async function refreshGallery(): Promise<void> {
   const freezes = await listGalleryFreezes();
+  const availableIds = new Set(freezes.map((freeze) => freeze.id));
+  runtime.selectedGalleryIds.forEach((id) => {
+    if (!availableIds.has(id)) runtime.selectedGalleryIds.delete(id);
+  });
   const grid = getElement('gallery-grid');
   revokeGalleryObjectUrls();
   grid.replaceChildren();
@@ -24,9 +28,16 @@ export async function refreshGallery(): Promise<void> {
     card.dataset.freezeId = freeze.id;
 
     const preview = document.createElement('img');
+    let suppressPreviewClick = false;
     preview.src = url;
     preview.alt = `Saved pixel portrait ${index + 1}`;
-    preview.addEventListener('click', () => void previewGalleryFreeze(freeze));
+    preview.addEventListener('click', () => {
+      if (suppressPreviewClick) {
+        suppressPreviewClick = false;
+        return;
+      }
+      void previewGalleryFreeze(freeze);
+    });
 
     const controls = document.createElement('div');
     controls.className = 'gallery-card-controls';
@@ -53,13 +64,21 @@ export async function refreshGallery(): Promise<void> {
     previewButton.className = 'button button-quiet gallery-preview-button';
     previewButton.textContent = 'Preview';
     previewButton.addEventListener('click', () => void previewGalleryFreeze(freeze));
-    controls.append(label, previewButton);
+    const removeButton = document.createElement('button');
+    removeButton.type = 'button';
+    removeButton.className = 'button button-danger gallery-delete-button';
+    removeButton.textContent = '\u00d7';
+    removeButton.setAttribute('aria-label', `Delete portrait ${index + 1}`);
+    removeButton.title = 'Delete portrait';
+    removeButton.addEventListener('click', () => void removeGalleryFreezes([freeze.id]));
+    controls.append(label, previewButton, removeButton);
     card.addEventListener('dragstart', (event) => {
       event.dataTransfer?.setData('text/plain', freeze.id);
       if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
     });
     let touchDragStart: { x: number; y: number; moved: boolean } | null = null;
     preview.addEventListener('pointerdown', (event) => {
+      suppressPreviewClick = false;
       if (event.pointerType === 'mouse') return;
       touchDragStart = { x: event.clientX, y: event.clientY, moved: false };
       preview.setPointerCapture(event.pointerId);
@@ -76,13 +95,8 @@ export async function refreshGallery(): Promise<void> {
       touchDragStart = null;
       if (!moved) return;
       event.preventDefault();
-      const bounds = elements.stage.getBoundingClientRect();
-      if (
-        event.clientX >= bounds.left &&
-        event.clientX <= bounds.right &&
-        event.clientY >= bounds.top &&
-        event.clientY <= bounds.bottom
-      ) {
+      suppressPreviewClick = true;
+      if (document.elementFromPoint(event.clientX, event.clientY)?.closest('#stage')) {
         void previewGalleryFreeze(freeze);
       }
     });

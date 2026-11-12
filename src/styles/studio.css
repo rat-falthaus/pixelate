@@ -35,6 +35,22 @@ body {
 
 button, input, select, textarea { font: inherit; }
 button { color: inherit; }
+button,
+a,
+label,
+input,
+select {
+  touch-action: manipulation;
+}
+.identity-logo {
+  display: block;
+  width: auto;
+  max-width: min(200px, 30vw);
+  height: 32px;
+  object-fit: contain;
+  object-position: left center;
+}
+.prompt-identity-logo { display: inline-block; vertical-align: middle; }
 button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
@@ -316,12 +332,6 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
 .artwork-stats strong { color: #e1e7db; font-weight: 650; }
 .stat-divider { width: 1px; height: 14px; background: #384037; }
 .view-tools { display: flex; align-items: center; gap: 9px; }
-.zoom-control { display: flex; height: 32px; align-items: center; gap: 5px; padding: 2px 4px; border: 1px solid #343b34; border-radius: 9px; background: #202520; }
-.zoom-control button { width: 25px; height: 25px; border: 0; border-radius: 6px; background: transparent; color: #cbd2c7; cursor: pointer; font-size: 14px; }
-.zoom-control button:hover { background: #353d34; }
-.zoom-control input[type="range"] { width: 68px; }
-.zoom-control output { min-width: 35px; color: #d2dacf; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 9px; text-align: center; }
-.zoom-control .fit-button { width: 34px; font-size: 9px; }
 .artboard-stage {
   position: relative;
   display: flex;
@@ -334,11 +344,10 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
   background-image: radial-gradient(#303630 0.65px, transparent .65px);
   background-position: center center;
   background-size: 18px 18px;
-  cursor: grab;
+  cursor: default;
   touch-action: none;
   user-select: none;
 }
-.artboard-stage:active { cursor: grabbing; }
 .artboard-transform { display: flex; flex: none; align-items: center; justify-content: center; transform-origin: center; will-change: transform; }
 .artboard {
   position: relative;
@@ -356,7 +365,7 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
   background-size: 18px 18px;
 }
 #svg-output, #svg-output svg { display: block; }
-#original-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: fill; pointer-events: none; }
+#original-photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
 .stage-hint {
   position: absolute;
   bottom: 17px;
@@ -386,7 +395,7 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
   padding: 28px;
   border: 1px solid #343b34;
   border-radius: 18px;
-  background: #191e19eF;
+  background: #191e19ef;
   box-shadow: 0 22px 80px #0007;
   text-align: center;
 }
@@ -492,13 +501,19 @@ input[type="range"]::-moz-range-thumb { width: 11px; height: 11px; border: 2px s
   touch-action: manipulation;
 }
 .gallery-card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
-.gallery-card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #0b0e0b; touch-action: none; }
-.gallery-card-controls { display: flex; align-items: center; justify-content: space-between; gap: 5px; padding: 7px; }
+.gallery-card img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #0b0e0b; touch-action: pan-y; }
+.gallery-card-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 5px; padding: 7px; }
+.gallery-card-controls label { min-height: 40px; }
+.gallery-card-controls input { width: 20px; height: 20px; }
+.gallery-delete-button {
+  min-width: 40px;
+  min-height: 40px;
+}
 .gallery-card-controls label { display: inline-flex; min-width: 0; align-items: center; gap: 5px; color: #bdc5b9; font-size: 9px; }
 .gallery-card-controls input { accent-color: var(--accent); }
-.gallery-preview-button { min-height: 27px; padding: 0 7px; font-size: 9px; }
+.gallery-preview-button { min-height: 40px; padding: 0 7px; font-size: 9px; }
 .gallery-empty { padding: 22px 10px; color: #9da69a; font-size: 11px; text-align: center; }
-.gallery-footer { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-top: 11px; border-top: 1px solid var(--line-soft); }
+.gallery-footer { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 11px; border-top: 1px solid var(--line-soft); }
 .gallery-footer .button { min-height: 38px; }
 .gesture-countdown {
   position: absolute;
@@ -735,14 +750,11 @@ textarea.text-input { min-height: 60px; resize: vertical; }
   .stat-size { display: none; }
   .view-tools { gap: 5px; }
   .view-tools > .button { min-height: 30px; padding: 0 7px; font-size: 9px; }
-  .zoom-control { height: 29px; gap: 2px; }
-  .zoom-control input[type="range"] { display: none; }
-  .zoom-control button { width: 22px; height: 22px; }
-  .zoom-control output { min-width: 30px; font-size: 8px; }
-  .zoom-control .fit-button { width: 29px; }
   .stage-hint { bottom: 8px; padding: 6px 10px; font-size: 9px; }
   .empty-state { padding: 21px 17px; }
   .live-toolbar { min-height: 62px; gap: 7px; padding: 9px 10px; }
+  .live-toolbar { flex-wrap: wrap; }
+  .live-actions { flex-wrap: wrap; }
   .live-brand { gap: 8px; }
   .live-brand strong { max-width: 25vw; font-size: 11px; }
   .live-brand small { font-size: 8px; }
@@ -764,6 +776,39 @@ textarea.text-input { min-height: 60px; resize: vertical; }
   .admin-card > .modal-heading { padding: 15px; }
   .admin-card > .modal-heading h2 { font-size: 15px; }
   .admin-content { padding: 12px 15px 18px; }
+}
+
+@media (pointer: coarse) {
+  .button,
+  .button-small,
+  .live-actions .button,
+  .text-button,
+  .segmented button,
+  .position-grid button {
+    min-height: 44px;
+  }
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+  .switch-label {
+    min-width: 44px;
+    min-height: 44px;
+    align-items: center;
+    justify-content: center;
+  }
+  input[type="range"] {
+    height: 36px;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    width: 22px;
+    height: 22px;
+    margin-top: -9px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+  }
 }
 
 @media (max-width: 390px) {

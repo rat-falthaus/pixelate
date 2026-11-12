@@ -13,6 +13,7 @@ export function handleStagePointerDown(event: PointerEvent): void {
     target.closest('button, a, input, select, textarea, [role="button"]')
   )
     return;
+  if (!model.image || runtime.previewFreeze) return;
   const messageTarget = target instanceof Element && target.closest('[data-draggable="message"]');
   const logoTarget = target instanceof Element && target.closest('[data-draggable="logo"]');
   if (
@@ -53,12 +54,5 @@ export function handleStagePointerDown(event: PointerEvent): void {
     if (model.tool === 'recolor') saveTileUndoSnapshot();
     runtime.painting = true;
     paintAt(event.clientX, event.clientY);
-  } else {
-    runtime.pointerStart = {
-      x: event.clientX,
-      y: event.clientY,
-      panX: model.panX,
-      panY: model.panY,
-    };
   }
 }

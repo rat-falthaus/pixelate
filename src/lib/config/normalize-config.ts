@@ -35,6 +35,7 @@ export function normalizeConfig(value: unknown): StudioConfig {
     enforceTheme:
       typeof stored.enforceTheme === 'boolean' ? stored.enforceTheme : DEFAULT_CONFIG.enforceTheme,
     fairMode: typeof stored.fairMode === 'boolean' ? stored.fairMode : DEFAULT_CONFIG.fairMode,
+    cameraDeviceId: typeof stored.cameraDeviceId === 'string' ? stored.cameraDeviceId : '',
     messagePosition: isMessagePosition(stored.messagePosition)
       ? stored.messagePosition
       : DEFAULT_CONFIG.messagePosition,

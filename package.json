@@ -8,6 +8,7 @@
     "build": "node scripts/copy-vision-assets.mjs && astro build && node scripts/build-offline.mjs",
     "preview": "astro preview",
     "check": "astro sync && tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
     "lint": "oxlint .",
     "format": "oxfmt ."
   },

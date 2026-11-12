@@ -3,6 +3,7 @@ import { runtime } from '../state/runtime';
 
 /** Stop the still-camera tracks and close its preview dialog. */
 export function closeCamera(): void {
+  runtime.cameraRequest += 1;
   runtime.cameraStream?.getTracks().forEach((track) => track.stop());
   runtime.cameraStream = null;
   elements.cameraVideo.srcObject = null;

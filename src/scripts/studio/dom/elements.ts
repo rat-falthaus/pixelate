@@ -56,8 +56,6 @@ export const elements = {
   liveCameraError: getElement('live-camera-error'),
   liveCameraVideo: getElement('live-camera-video') as HTMLVideoElement,
   drawerBackdrop: getElement('drawer-backdrop'),
-  zoomSlider: getElement('zoom-slider') as HTMLInputElement,
-  zoomValue: getElement('zoom-value'),
   comparePhoto: getElement('compare-photo') as HTMLButtonElement,
   pinDialog: getElement('pin-dialog') as HTMLDialogElement,
   pinInput: getElement('pin-input') as HTMLInputElement,

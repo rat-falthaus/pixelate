@@ -1,5 +1,6 @@
 import type { MessagePosition } from '../../../lib/types';
 import { renderArtwork } from '../artwork/render-artwork';
+import { restartSelectedCamera } from '../camera/restart-selected-camera';
 import { elements } from '../dom/elements';
 import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
@@ -15,12 +16,15 @@ export function applyAdminSettings(): void {
   const signature = (getElement('setting-signature') as HTMLInputElement).value.trim();
   const defaultMessage = (getElement('setting-message') as HTMLTextAreaElement).value;
   const pin = (getElement('setting-pin') as HTMLInputElement).value.trim();
+  const cameraDeviceId = (getElement('setting-camera') as HTMLSelectElement).value;
+  const cameraChanged = model.config.cameraDeviceId !== cameraDeviceId;
   if (pin && pin.length < 3) {
     notify('PIN must contain at least 3 characters.');
     return;
   }
   model.config.enforceTheme = enforceTheme;
   model.config.fairMode = fairMode;
+  model.config.cameraDeviceId = cameraDeviceId;
   model.config.applicationTitle = title || 'Pixel Studio';
   model.config.brandSignature = signature;
   model.config.defaultMessage = defaultMessage;
@@ -74,4 +78,5 @@ export function applyAdminSettings(): void {
   applyWorkspaceSettings();
   renderArtwork();
   notify('Brand and kiosk settings applied.');
+  if (cameraChanged) void restartSelectedCamera();
 }

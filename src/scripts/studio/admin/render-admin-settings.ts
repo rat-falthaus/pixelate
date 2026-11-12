@@ -1,9 +1,20 @@
 import { getElement } from '../dom/get-element';
 import { model } from '../state/model';
+import { refreshCameraDevices } from '../camera/refresh-camera-devices';
 import { renderThemeColors } from './render-theme-colors';
 
 /** Populate admin controls from the saved configuration and loaded brand assets. */
 export function renderAdminSettings(): void {
+  const camera = getElement('setting-camera') as HTMLSelectElement;
+  if (
+    model.config.cameraDeviceId &&
+    !Array.from(camera.options).some((option) => option.value === model.config.cameraDeviceId)
+  ) {
+    camera.add(new Option('Saved camera (checking availability)', model.config.cameraDeviceId));
+  }
+  camera.value = model.config.cameraDeviceId;
+  camera.dataset.initialized = 'true';
+  void refreshCameraDevices();
   (getElement('setting-lock-palette') as HTMLInputElement).checked = model.config.enforceTheme;
   (getElement('setting-fair-mode') as HTMLInputElement).checked = model.config.fairMode;
   (getElement('setting-title') as HTMLInputElement).value = model.config.applicationTitle;

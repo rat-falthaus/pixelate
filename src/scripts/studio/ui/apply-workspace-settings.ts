@@ -20,7 +20,6 @@ export function applyWorkspaceSettings(): void {
     });
   }
   const theme = getActiveTheme(model.config);
-  elements.brandTitle.textContent = model.config.applicationTitle;
   document.title = `${model.config.applicationTitle} — Photo to SVG`;
   elements.modeLabel.textContent = model.config.fairMode
     ? 'Fair kiosk'
