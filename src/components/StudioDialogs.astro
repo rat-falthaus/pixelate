@@ -1,0 +1,93 @@
+<dialog class="modal" id="pin-dialog" aria-labelledby="pin-title">
+  <div class="modal-card pin-card">
+    <div class="modal-heading">
+      <div><p class="eyebrow">Studio settings</p><h2 id="pin-title">Admin access</h2></div>
+      <button class="icon-button" type="button" data-close="pin-dialog" aria-label="Close">×</button>
+    </div>
+    <p class="muted-copy">Enter your local admin PIN to change brand and kiosk settings.</p>
+    <label class="sr-only" for="pin-input">Admin PIN</label>
+    <input id="pin-input" class="text-input pin-input" type="password" inputmode="numeric" maxlength="16" autocomplete="off" />
+    <p class="error-copy is-hidden" id="pin-error" role="alert">That PIN did not match. Try again.</p>
+    <div class="keypad">
+      {Array.from({ length: 9 }, (_, i) => <button type="button" data-key={i + 1}>{i + 1}</button>)}
+      <button type="button" id="pin-clear">Clear</button><button type="button" data-key="0">0</button><button type="button" id="pin-submit">Unlock</button>
+    </div>
+    <p class="fine-print">This PIN is a convenience lock only; it is not server-side authentication.</p>
+  </div>
+</dialog>
+
+<dialog class="modal" id="admin-dialog" aria-labelledby="admin-title">
+  <div class="modal-card admin-card">
+    <div class="modal-heading">
+      <div><p class="eyebrow">Local configuration</p><h2 id="admin-title">Brand &amp; kiosk setup</h2></div>
+      <button class="button button-primary" type="button" id="apply-settings">Apply settings</button>
+    </div>
+    <div class="admin-content">
+      <section class="settings-card">
+        <div class="settings-intro"><h3>Experience</h3><p>Choose whether visitors can adjust technical and brand controls.</p></div>
+        <label class="settings-toggle"><span><strong>Lock to brand palette</strong><small>Map all image tones to the active brand colors.</small></span><input id="setting-lock-palette" type="checkbox" checked /></label>
+        <label class="settings-toggle"><span><strong>Fair / kiosk mode</strong><small>Hide studio-only controls and limit visitor options.</small></span><input id="setting-fair-mode" type="checkbox" /></label>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-intro"><h3>Brand identity</h3><p>All settings are saved in this browser only.</p></div>
+        <label class="field-label">Application title<input id="setting-title" class="text-input" type="text" maxlength="48" /></label>
+        <label class="field-label">Brand signature<input id="setting-signature" class="text-input" type="text" maxlength="32" /></label>
+        <label class="field-label">Default message<textarea id="setting-message" class="text-input" rows="2" maxlength="160"></textarea></label>
+        <label class="field-label">Brand palette<select id="setting-theme" class="text-input"></select></label>
+        <div class="theme-editor-heading"><strong>Palette colors</strong><button class="text-button" id="add-color" type="button">＋ Add color</button></div>
+        <div class="theme-colors" id="theme-colors"></div>
+        <div class="button-row">
+          <button class="button button-small button-quiet" id="new-theme" type="button">New palette</button>
+          <button class="button button-small button-danger" id="delete-theme" type="button">Delete palette</button>
+        </div>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-intro"><h3>Pixel rules</h3><p>Dark and bright cells become negative-space cutouts. Tile gaps are optional.</p></div>
+        <label class="range-control">
+          <span><span>Dark cutout threshold</span><output id="dark-cutoff-value">20%</output></span>
+          <input id="setting-dark-cutoff" type="range" min="0" max="60" value="20" />
+        </label>
+        <label class="range-control">
+          <span><span>Bright cutout threshold</span><output id="light-cutoff-value">95%</output></span>
+          <input id="setting-light-cutoff" type="range" min="50" max="100" value="95" />
+        </label>
+        <label class="settings-toggle"><span><strong>Tile hairlines</strong><small>Add a narrow background gap between tiles.</small></span><input id="setting-hairlines" type="checkbox" checked /></label>
+      </section>
+
+      <section class="settings-card">
+        <div class="settings-intro"><h3>Visitor controls</h3><p>These permissions apply while fair mode is enabled.</p></div>
+        <div class="permission-grid">
+          <label><input id="permission-subject" type="checkbox" checked /> Subject controls</label>
+          <label><input id="permission-message" type="checkbox" checked /> Message editing</label>
+          <label><input id="permission-size" type="checkbox" checked /> Tile size</label>
+          <label><input id="permission-background" type="checkbox" checked /> Background switch</label>
+          <label><input id="permission-mapping" type="checkbox" checked /> Tone mapping</label>
+          <label><input id="permission-recolor" type="checkbox" checked /> Tile brush</label>
+        </div>
+        <label class="field-label">Change admin PIN<input id="setting-pin" class="text-input" type="password" maxlength="16" autocomplete="new-password" placeholder="Leave blank to keep current PIN" /></label>
+      </section>
+    </div>
+  </div>
+</dialog>
+
+<dialog class="modal" id="camera-dialog" aria-labelledby="camera-title">
+  <div class="modal-card camera-card">
+    <div class="modal-heading">
+      <div><p class="eyebrow">On-device camera</p><h2 id="camera-title">Take a photo</h2></div>
+      <button class="icon-button" type="button" data-close="camera-dialog" aria-label="Close">×</button>
+    </div>
+    <div class="camera-view">
+      <video id="camera-video" autoplay playsinline></video>
+      <p id="camera-status">Requesting camera access…</p>
+    </div>
+    <div class="button-row align-end">
+      <button class="button button-quiet" type="button" data-close="camera-dialog">Cancel</button>
+      <button class="button button-primary" type="button" id="capture-photo">Capture &amp; pixelate</button>
+    </div>
+  </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<canvas id="sampling-canvas" hidden></canvas>

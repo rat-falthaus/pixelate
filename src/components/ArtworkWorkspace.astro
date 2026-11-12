@@ -1,0 +1,29 @@
+<main class="workspace" aria-label="SVG preview">
+  <div class="workspace-toolbar">
+    <div class="artwork-stats" aria-live="polite">
+      <span><strong id="stat-tiles">0</strong> tiles</span>
+      <span class="stat-divider"></span>
+      <span><strong id="stat-paths">0</strong> paths</span>
+      <span class="stat-size"><strong id="stat-size">0 KB</strong></span>
+    </div>
+    <div class="view-tools">
+      <button class="button button-small button-quiet" id="compare-photo" type="button">Compare photo</button>
+      <div class="zoom-control" aria-label="Zoom controls">
+        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+        <input id="zoom-slider" type="range" min="15" max="400" value="100" aria-label="Zoom level" />
+        <output id="zoom-value">100%</output>
+        <button type="button" id="zoom-in" aria-label="Zoom in">＋</button>
+        <button class="fit-button" id="zoom-fit" type="button">Fit</button>
+      </div>
+    </div>
+  </div>
+  <div class="artboard-stage" id="stage">
+    <div class="artboard-transform" id="artboard-transform">
+      <div class="artboard artboard-dark" id="artboard">
+        <div id="svg-output" aria-label="Generated square mosaic artwork"></div>
+        <img id="original-photo" alt="Original photo comparison" hidden />
+      </div>
+    </div>
+    <div class="stage-hint"><span class="hint-dot" id="hint-dot"></span><span id="hint-text">Drag to move · Scroll to zoom</span></div>
+  </div>
+</main>

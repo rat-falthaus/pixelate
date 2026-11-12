@@ -1,0 +1,21 @@
+---
+import AppLayout from '../layouts/AppLayout.astro';
+import StudioHeader from '../components/StudioHeader.astro';
+import ControlsPanel from '../components/ControlsPanel.astro';
+import ArtworkWorkspace from '../components/ArtworkWorkspace.astro';
+import StudioDialogs from '../components/StudioDialogs.astro';
+---
+
+<AppLayout title="Pixel Studio — Photo to SVG">
+  <div class="app-shell">
+    <StudioHeader />
+    <div class="studio-layout">
+      <ControlsPanel />
+      <ArtworkWorkspace />
+    </div>
+  </div>
+  <StudioDialogs />
+  <script>
+    import '../scripts/studio';
+  </script>
+</AppLayout>

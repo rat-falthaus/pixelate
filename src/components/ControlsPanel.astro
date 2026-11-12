@@ -1,0 +1,156 @@
+<aside class="control-panel" aria-label="Artwork controls">
+  <div class="panel-scroll">
+    <section class="control-section source-section">
+      <div class="section-heading">
+        <div><span class="step-index">01</span><h2>Photo source</h2></div>
+        <span class="meta-value" id="source-dimensions">— × —</span>
+      </div>
+      <button class="source-drop" id="drop-zone" type="button">
+        <img id="source-thumb" alt="" />
+        <span class="source-copy">
+          <strong id="file-name">Choose a photo</strong>
+          <small>Drop an image here or browse files</small>
+        </span>
+        <span class="source-arrow" aria-hidden="true">↗</span>
+      </button>
+      <input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden />
+      <p class="privacy-note">Your image stays on this device. Nothing is uploaded.</p>
+    </section>
+
+    <section class="control-section" id="subject-section">
+      <div class="section-heading">
+        <div><span class="step-index">02</span><h2>Subject &amp; texture</h2></div>
+        <label class="switch-label" title="Enable subject-aware sampling">
+          <input id="subject-enabled" type="checkbox" checked />
+          <span class="switch"></span><span class="sr-only">Enable subject isolation</span>
+        </label>
+      </div>
+      <div class="control-stack" id="subject-controls">
+        <label class="range-control">
+          <span><span>Subject focus</span><output id="subject-threshold-value">52%</output></span>
+          <input id="subject-threshold" type="range" min="10" max="90" value="52" />
+        </label>
+        <label class="range-control">
+          <span><span>Subject contrast</span><output id="subject-contrast-value">78%</output></span>
+          <input id="subject-contrast" type="range" min="0" max="100" value="78" />
+        </label>
+        <div class="range-pair">
+          <label class="range-control">
+            <span><span>Background fill</span><output id="background-density-value">58%</output></span>
+            <input id="background-density" type="range" min="0" max="100" value="58" />
+          </label>
+          <label class="range-control">
+            <span><span>Color scatter</span><output id="background-scatter-value">72%</output></span>
+            <input id="background-scatter" type="range" min="0" max="100" value="72" />
+          </label>
+        </div>
+        <div class="button-row">
+          <button class="button button-small button-quiet grow" id="shuffle-background" type="button">Shuffle background</button>
+          <button class="button button-small button-danger is-hidden" id="reset-mask" type="button">Reset mask</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="control-section" id="message-section">
+      <div class="section-heading">
+        <div><span class="step-index">03</span><h2>Message</h2></div>
+        <label class="switch-label">
+          <input id="message-enabled" type="checkbox" checked />
+          <span class="switch"></span><span class="sr-only">Show message</span>
+        </label>
+      </div>
+      <div class="control-stack" id="message-controls">
+        <label class="sr-only" for="message-text">Artwork message</label>
+        <textarea id="message-text" rows="3" maxlength="160" spellcheck="false">MAKE
+SOMETHING
+MATTER.</textarea>
+        <div class="segmented" aria-label="Message position">
+          <button type="button" data-position="upper" class="is-selected">Top</button>
+          <button type="button" data-position="center">Center</button>
+          <button type="button" data-position="lower">Bottom</button>
+          <button type="button" data-position="topleft">Corner</button>
+        </div>
+        <label class="range-control">
+          <span><span>Type scale</span><output id="message-scale-value">100%</output></span>
+          <input id="message-scale" type="range" min="60" max="150" value="100" />
+        </label>
+        <label class="inline-check"><input id="show-badge" type="checkbox" checked /><span>Show brand signature</span></label>
+      </div>
+    </section>
+
+    <section class="control-section" id="palette-section">
+      <div class="section-heading">
+        <div><span class="step-index">04</span><h2>Palette &amp; mapping</h2></div>
+        <span class="meta-value" id="palette-count">— colors</span>
+      </div>
+      <div class="button-row">
+        <button class="button button-small button-accent grow" id="rotate-colors" type="button">↻ &nbsp;Rotate colors</button>
+        <button class="button button-small button-quiet grow" id="randomize-look" type="button">Surprise me</button>
+      </div>
+      <div class="mapping-header" id="mapping-controls">
+        <span>Photo tone → brand color</span>
+        <button class="text-button" id="auto-map" type="button">Auto-map</button>
+      </div>
+      <div class="mapping-list" id="mapping-list" aria-label="Photo tone color mapping"></div>
+      <div class="free-palette-controls is-hidden" id="free-palette-controls">
+        <label class="range-control">
+          <span><span>Free palette size</span><output id="free-color-count-value">7</output></span>
+          <input id="free-color-count" type="range" min="2" max="32" value="7" />
+        </label>
+      </div>
+    </section>
+
+    <section class="control-section" id="brush-section">
+      <div class="section-heading">
+        <div><span class="step-index">05</span><h2>Tile brush</h2></div>
+        <div class="button-row compact">
+          <button class="text-button" id="undo-tiles" type="button" disabled>Undo</button>
+          <button class="text-button is-hidden" id="clear-tiles" type="button">Reset</button>
+        </div>
+      </div>
+      <div class="segmented tool-switch" aria-label="Canvas tool">
+        <button type="button" data-tool="pan" class="is-selected">Move</button>
+        <button type="button" data-tool="recolor">Recolor</button>
+        <button type="button" data-tool="subject">Mask</button>
+      </div>
+      <div id="brush-controls" class="control-stack brush-controls">
+        <p class="helper-text" id="brush-help">Choose a color, then paint tiles on the artwork.</p>
+        <div class="swatches" id="brush-swatches"></div>
+        <div class="button-row is-hidden" id="mask-brushes">
+          <button class="button button-small button-quiet grow" type="button" data-mask="keep">＋ Keep subject</button>
+          <button class="button button-small button-quiet grow" type="button" data-mask="background">－ Free background</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="control-section" id="tile-size-section">
+      <div class="section-heading">
+        <div><span class="step-index">06</span><h2>Tile size</h2></div>
+        <label class="number-control">
+          <input id="tile-size-number" type="number" min="4" max="80" value="18" aria-label="Tile size in pixels" />
+          <span>px</span>
+        </label>
+      </div>
+      <div class="size-presets" aria-label="Tile size presets">
+        <button type="button" data-size="10">Fine</button>
+        <button type="button" data-size="18" class="is-selected">Medium</button>
+        <button type="button" data-size="28">Bold</button>
+        <button type="button" data-size="42">Chunky</button>
+      </div>
+      <input id="tile-size" type="range" min="4" max="80" value="18" aria-label="Tile size" />
+      <div class="range-ends"><span>4 px</span><span id="grid-count">— tiles</span><span>80 px</span></div>
+    </section>
+
+    <section class="control-section" id="canvas-section">
+      <div class="section-heading">
+        <div><span class="step-index">07</span><h2>Canvas</h2></div>
+        <label class="inline-check export-background fair-hide"><input id="include-background" type="checkbox" checked /><span>Include in export</span></label>
+      </div>
+      <div class="segmented background-switch" aria-label="Canvas background">
+        <button type="button" data-background="black" class="is-selected"><i class="swatch-dot dark"></i>Dark</button>
+        <button type="button" data-background="white"><i class="swatch-dot light"></i>Light</button>
+        <button type="button" data-background="transparent"><i class="swatch-dot alpha"></i>Alpha</button>
+      </div>
+    </section>
+  </div>
+</aside>
