@@ -1,5 +1,11 @@
+---
+const baseUrl = import.meta.env.BASE_URL.endsWith('/')
+  ? import.meta.env.BASE_URL
+  : `${import.meta.env.BASE_URL}/`;
+---
+
 <header class="topbar">
-  <a class="brand-lockup" href="/" aria-label="Studio home">
+  <a class="brand-lockup" href={baseUrl} aria-label="Studio home">
     <span class="brand-mark" aria-hidden="true">
       <i></i><i></i><i></i><i></i>
     </span>
@@ -10,14 +16,6 @@
   </a>
 
   <div class="topbar-actions">
-    <label class="sample-picker">
-      <span class="sr-only">Load a sample image</span>
-      <select id="sample-select" aria-label="Load a sample image">
-        <option value="architecture">Sample: City forms</option>
-        <option value="portrait">Sample: Portrait study</option>
-        <option value="landscape">Sample: Sunset landscape</option>
-      </select>
-    </label>
     <button class="button button-quiet" id="camera-open" type="button">
       <span aria-hidden="true">◎</span><span class="optional-label">Camera</span>
     </button>
@@ -25,6 +23,9 @@
       <span aria-hidden="true">↑</span><span class="optional-label">Add photo</span>
     </button>
     <button class="button button-quiet desktop-action fair-hide" id="copy-svg" type="button">Copy SVG</button>
+    <button class="button button-quiet" data-action="share" type="button" aria-label="Share your artwork">
+      <span aria-hidden="true">↗</span><span class="optional-label">Share</span>
+    </button>
     <button class="button button-primary" id="download-svg" type="button">
       <span aria-hidden="true">↓</span><span>Export SVG</span>
     </button>

@@ -1,0 +1,18 @@
+{
+  "name": "Pixelate — Photo to SVG",
+  "short_name": "Pixelate",
+  "description": "A private, offline-ready photo-to-pixel-art studio.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111311",
+  "theme_color": "#111311",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

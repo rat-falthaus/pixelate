@@ -34,6 +34,46 @@
         <label class="field-label">Application title<input id="setting-title" class="text-input" type="text" maxlength="48" /></label>
         <label class="field-label">Brand signature<input id="setting-signature" class="text-input" type="text" maxlength="32" /></label>
         <label class="field-label">Default message<textarea id="setting-message" class="text-input" rows="2" maxlength="160"></textarea></label>
+        <label class="field-label">Message starting position
+          <select id="setting-message-position" class="text-input">
+            <option value="upper">Top center</option><option value="topleft">Top left</option><option value="topright">Top right</option>
+            <option value="middleleft">Center left</option><option value="center">Center</option><option value="middleright">Center right</option>
+            <option value="bottomleft">Bottom left</option><option value="lower">Bottom center</option><option value="bottomright">Bottom right</option>
+          </select>
+        </label>
+        <label class="settings-toggle"><span><strong>Lock message position</strong><small>Visitors cannot drag or reposition the message.</small></span><input id="setting-lock-message-position" type="checkbox" checked /></label>
+
+        <div class="brand-asset-block">
+          <div class="settings-intro"><h3>Logo</h3><p>Upload an SVG, PNG, JPEG, or WebP logo. It is stored only on this device.</p></div>
+          <div class="brand-asset-row">
+            <img id="setting-logo-preview" class="brand-asset-preview is-hidden" alt="Current brand logo preview" />
+            <label class="button button-small button-quiet" for="setting-logo-file">Upload logo</label>
+            <input id="setting-logo-file" type="file" accept=".svg,image/png,image/jpeg,image/webp" hidden />
+            <button class="button button-small button-danger" id="remove-logo" type="button">Remove</button>
+          </div>
+          <label class="field-label">Logo starting position
+            <select id="setting-logo-position" class="text-input">
+              <option value="upper">Top center</option><option value="topleft">Top left</option><option value="topright">Top right</option>
+              <option value="middleleft">Center left</option><option value="center">Center</option><option value="middleright">Center right</option>
+              <option value="bottomleft">Bottom left</option><option value="lower">Bottom center</option><option value="bottomright">Bottom right</option>
+            </select>
+          </label>
+          <label class="settings-toggle"><span><strong>Lock logo position</strong><small>Visitors cannot drag or reposition the logo.</small></span><input id="setting-lock-logo-position" type="checkbox" checked /></label>
+        </div>
+
+        <div class="brand-asset-block">
+          <div class="settings-intro"><h3>Typography</h3><p>Upload a font file to use it in the artwork. Use only fonts licensed for embedding.</p></div>
+          <div class="brand-asset-row">
+            <span id="setting-font-name" class="muted-copy">System font</span>
+            <label class="button button-small button-quiet" for="setting-font-file">Upload font</label>
+            <input id="setting-font-file" type="file" accept=".woff2,.woff,.ttf,.otf,font/woff2,font/woff,font/ttf,font/otf" hidden />
+            <button class="button button-small button-danger" id="remove-font" type="button">Remove</button>
+          </div>
+          <label class="field-label">Artwork font
+            <select id="setting-font-choice" class="text-input"><option value="system">System sans-serif</option><option value="uploaded">Uploaded font</option></select>
+          </label>
+        </div>
+
         <label class="field-label">Brand palette<select id="setting-theme" class="text-input"></select></label>
         <div class="theme-editor-heading"><strong>Palette colors</strong><button class="text-button" id="add-color" type="button">＋ Add color</button></div>
         <div class="theme-colors" id="theme-colors"></div>
@@ -66,11 +106,29 @@
           <label><input id="permission-mapping" type="checkbox" checked /> Tone mapping</label>
           <label><input id="permission-recolor" type="checkbox" checked /> Tile brush</label>
         </div>
+        <label class="settings-toggle"><span><strong>Clear gallery after sharing</strong><small>Remove shared freezes from this device after the selected delay.</small></span><input id="setting-clear-gallery" type="checkbox" checked /></label>
+        <label class="field-label">Gallery cleanup delay (seconds)<input id="setting-gallery-delay" class="text-input" type="number" min="0" max="30" step="1" value="0" /></label>
         <label class="field-label">Change admin PIN<input id="setting-pin" class="text-input" type="password" maxlength="16" autocomplete="new-password" placeholder="Leave blank to keep current PIN" /></label>
       </section>
     </div>
   </div>
 </dialog>
+
+<div class="gallery-overlay is-hidden" id="gallery-overlay" aria-label="Portrait gallery">
+  <div class="gallery-panel" role="dialog" aria-modal="false" aria-labelledby="gallery-title">
+    <div class="modal-heading">
+      <div><p class="eyebrow">Saved on this device</p><h2 id="gallery-title">Portrait gallery</h2></div>
+      <button class="icon-button" type="button" id="gallery-close" aria-label="Close gallery">×</button>
+    </div>
+    <p class="muted-copy gallery-help">Select portraits to share, or drag one onto the live screen for a full preview.</p>
+    <div class="gallery-grid" id="gallery-grid"></div>
+    <div class="gallery-empty" id="gallery-empty">Your captured portraits will appear here.</div>
+    <div class="gallery-footer">
+      <span class="muted-copy" id="gallery-selection-count">0 selected</span>
+      <button class="button button-primary" id="gallery-share" type="button" disabled>Share selected</button>
+    </div>
+  </div>
+</div>
 
 <dialog class="modal" id="camera-dialog" aria-labelledby="camera-title">
   <div class="modal-card camera-card">
@@ -89,5 +147,24 @@
   </div>
 </dialog>
 
+<dialog class="modal" id="share-dialog" aria-labelledby="share-title">
+  <div class="modal-card share-card">
+    <div class="modal-heading">
+      <div><p class="eyebrow">Your artwork</p><h2 id="share-title">Send it to someone</h2></div>
+      <button class="icon-button" type="button" data-close="share-dialog" aria-label="Close sharing options">×</button>
+    </div>
+    <p class="muted-copy">Share a PNG image with nearby devices or messaging apps, or save the original SVG.</p>
+    <button class="button button-primary share-native-button" id="share-native" type="button">↗ &nbsp;Open share sheet</button>
+    <div class="share-options">
+      <button class="button button-quiet" id="share-download-png" type="button">↓ &nbsp;Save PNG image</button>
+      <button class="button button-quiet" id="share-download-svg" type="button">↓ &nbsp;Save SVG artwork</button>
+      <button class="button button-quiet" id="share-copy-svg" type="button">Copy SVG code</button>
+    </div>
+    <p class="fine-print" id="share-help">The share sheet is available on supported devices. Your artwork is prepared locally.</p>
+  </div>
+</dialog>
+
+<div class="drawer-backdrop" id="drawer-backdrop"></div>
+<video id="live-camera-video" class="live-camera-video" autoplay playsinline muted aria-hidden="true"></video>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 <canvas id="sampling-canvas" hidden></canvas>

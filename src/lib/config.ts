@@ -1,4 +1,4 @@
-import type { BrandTheme, StudioConfig, VisitorPermissions } from './types';
+import type { BrandTheme, MessagePosition, StudioConfig, VisitorPermissions } from './types';
 
 export const STORAGE_KEY = 'white-label-pixel-studio-config-v1';
 
@@ -10,11 +10,11 @@ export const DEFAULT_THEME: BrandTheme = {
 
 export const DEFAULT_PERMISSIONS: VisitorPermissions = {
   subject: true,
-  message: true,
+  message: false,
   size: true,
-  background: true,
-  mapping: true,
-  recolor: true,
+  background: false,
+  mapping: false,
+  recolor: false,
 };
 
 export const DEFAULT_CONFIG: StudioConfig = {
@@ -24,6 +24,15 @@ export const DEFAULT_CONFIG: StudioConfig = {
   defaultMessage: 'MAKE\nSOMETHING\nMATTER.',
   enforceTheme: true,
   fairMode: false,
+  messagePosition: 'upper',
+  logoPosition: 'lower',
+  messagePositionLocked: true,
+  logoPositionLocked: true,
+  logoAssetId: null,
+  fontAssetId: null,
+  useUploadedFont: false,
+  clearGalleryAfterShare: true,
+  galleryClearDelaySeconds: 0,
   darkCutoffPercent: 20,
   lightCutoffPercent: 95,
   hairlines: true,
@@ -72,6 +81,28 @@ export function normalizeConfig(value: unknown): StudioConfig {
     ...stored,
     enforceTheme: typeof stored.enforceTheme === 'boolean' ? stored.enforceTheme : DEFAULT_CONFIG.enforceTheme,
     fairMode: typeof stored.fairMode === 'boolean' ? stored.fairMode : DEFAULT_CONFIG.fairMode,
+    messagePosition: isMessagePosition(stored.messagePosition) ? stored.messagePosition : DEFAULT_CONFIG.messagePosition,
+    logoPosition: isMessagePosition(stored.logoPosition) ? stored.logoPosition : DEFAULT_CONFIG.logoPosition,
+    messagePositionLocked: typeof stored.messagePositionLocked === 'boolean'
+      ? stored.messagePositionLocked
+      : DEFAULT_CONFIG.messagePositionLocked,
+    logoPositionLocked: typeof stored.logoPositionLocked === 'boolean'
+      ? stored.logoPositionLocked
+      : DEFAULT_CONFIG.logoPositionLocked,
+    logoAssetId: typeof stored.logoAssetId === 'string' ? stored.logoAssetId : null,
+    fontAssetId: typeof stored.fontAssetId === 'string' ? stored.fontAssetId : null,
+    useUploadedFont: typeof stored.useUploadedFont === 'boolean'
+      ? stored.useUploadedFont
+      : DEFAULT_CONFIG.useUploadedFont,
+    clearGalleryAfterShare: typeof stored.clearGalleryAfterShare === 'boolean'
+      ? stored.clearGalleryAfterShare
+      : DEFAULT_CONFIG.clearGalleryAfterShare,
+    galleryClearDelaySeconds: clampNumber(
+      stored.galleryClearDelaySeconds,
+      0,
+      30,
+      DEFAULT_CONFIG.galleryClearDelaySeconds,
+    ),
     hairlines: typeof stored.hairlines === 'boolean' ? stored.hairlines : DEFAULT_CONFIG.hairlines,
     adminPin: typeof stored.adminPin === 'string' && stored.adminPin.length >= 3 ? stored.adminPin : DEFAULT_CONFIG.adminPin,
     applicationTitle: typeof stored.applicationTitle === 'string' ? stored.applicationTitle : DEFAULT_CONFIG.applicationTitle,
@@ -83,6 +114,12 @@ export function normalizeConfig(value: unknown): StudioConfig {
     themes: safeThemes.map((theme) => ({ ...theme, colors: theme.colors.map((color) => color.toUpperCase()) })),
     permissions: normalizedPermissions,
   };
+}
+
+function isMessagePosition(value: unknown): value is MessagePosition {
+  return value === 'upper' || value === 'center' || value === 'lower'
+    || value === 'topleft' || value === 'topright' || value === 'middleleft'
+    || value === 'middleright' || value === 'bottomleft' || value === 'bottomright';
 }
 
 export function loadConfig(): StudioConfig {

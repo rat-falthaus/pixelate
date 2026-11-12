@@ -1,5 +1,5 @@
 import { clusterFromRgb, colorDistance, hexToRgb, luminance, seededRandom } from './color';
-import type { ColorCluster, PhotoCell, SampledArtwork, SamplingOptions } from './types';
+import type { ColorCluster, ImageSource, PhotoCell, SampledArtwork, SamplingOptions } from './types';
 
 const MAX_GRID_EDGE = 180;
 const K_MEANS_ITERATIONS = 8;
@@ -9,11 +9,11 @@ const K_MEANS_ITERATIONS = 8;
  * saliency, applies negative-space thresholds, and quantizes visible tones.
  */
 export function sampleImage(
-  image: HTMLImageElement,
+  image: ImageSource,
   options: SamplingOptions,
 ): SampledArtwork {
-  const sourceWidth = image.naturalWidth || image.width;
-  const sourceHeight = image.naturalHeight || image.height;
+  const sourceWidth = image instanceof HTMLImageElement ? image.naturalWidth || image.width : image.width;
+  const sourceHeight = image instanceof HTMLImageElement ? image.naturalHeight || image.height : image.height;
   const tileSize = Math.max(4, options.tileSize);
   const gridScale = Math.min(1, (MAX_GRID_EDGE * tileSize) / Math.max(sourceWidth, sourceHeight));
   const cols = Math.max(1, Math.floor((sourceWidth * gridScale) / tileSize));

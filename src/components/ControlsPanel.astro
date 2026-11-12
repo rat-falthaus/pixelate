@@ -1,4 +1,8 @@
 <aside class="control-panel" aria-label="Artwork controls">
+  <div class="drawer-heading">
+    <div><p class="eyebrow">Quick adjustments</p><strong>Shape your result</strong></div>
+    <button class="icon-button" id="drawer-close" type="button" aria-label="Close adjustments">×</button>
+  </div>
   <div class="panel-scroll">
     <section class="control-section source-section">
       <div class="section-heading">
@@ -13,7 +17,7 @@
         </span>
         <span class="source-arrow" aria-hidden="true">↗</span>
       </button>
-      <input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden />
+      <input id="photo-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden />
       <p class="privacy-note">Your image stays on this device. Nothing is uploaded.</p>
     </section>
 
@@ -65,16 +69,38 @@
 SOMETHING
 MATTER.</textarea>
         <div class="segmented" aria-label="Message position">
-          <button type="button" data-position="upper" class="is-selected">Top</button>
-          <button type="button" data-position="center">Center</button>
-          <button type="button" data-position="lower">Bottom</button>
-          <button type="button" data-position="topleft">Corner</button>
+          <button type="button" data-position="topleft">↖</button>
+          <button type="button" data-position="upper" class="is-selected">↑</button>
+          <button type="button" data-position="topright">↗</button>
+          <button type="button" data-position="middleleft">←</button>
+          <button type="button" data-position="center">·</button>
+          <button type="button" data-position="middleright">→</button>
+          <button type="button" data-position="bottomleft">↙</button>
+          <button type="button" data-position="lower">↓</button>
+          <button type="button" data-position="bottomright">↘</button>
         </div>
         <label class="range-control">
           <span><span>Type scale</span><output id="message-scale-value">100%</output></span>
           <input id="message-scale" type="range" min="60" max="150" value="100" />
         </label>
         <label class="inline-check"><input id="show-badge" type="checkbox" checked /><span>Show brand signature</span></label>
+      </div>
+    </section>
+
+    <section class="control-section is-hidden" id="logo-section">
+      <div class="section-heading">
+        <div><span class="step-index">04</span><h2>Logo placement</h2></div>
+      </div>
+      <div class="segmented position-grid" aria-label="Logo position">
+        <button type="button" data-logo-position="topleft">↖</button>
+        <button type="button" data-logo-position="upper">↑</button>
+        <button type="button" data-logo-position="topright">↗</button>
+        <button type="button" data-logo-position="middleleft">←</button>
+        <button type="button" data-logo-position="center">·</button>
+        <button type="button" data-logo-position="middleright">→</button>
+        <button type="button" data-logo-position="bottomleft">↙</button>
+        <button type="button" data-logo-position="lower">↓</button>
+        <button type="button" data-logo-position="bottomright">↘</button>
       </div>
     </section>
 

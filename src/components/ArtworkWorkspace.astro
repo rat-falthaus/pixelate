@@ -1,4 +1,18 @@
 <main class="workspace" aria-label="SVG preview">
+  <div class="live-toolbar" id="live-toolbar">
+    <div class="live-brand">
+      <span class="live-indicator" id="live-indicator"></span>
+      <div><strong id="live-brand-title">Pixel Studio</strong><small id="live-status">Fair portrait studio</small></div>
+    </div>
+    <div class="live-actions">
+      <button class="button live-secondary" id="live-camera" type="button" aria-label="Start a new portrait">◎ <span id="live-camera-label">New portrait</span></button>
+      <button class="button live-secondary" id="live-new-colors" type="button" aria-label="Choose a new colorway">🎲 <span>New colors</span></button>
+      <button class="button live-secondary live-gallery-button" id="gallery-open" type="button" aria-label="Open portrait gallery">▦ <span class="live-label">Gallery</span><span class="live-count" id="gallery-count">0</span></button>
+      <button class="button live-share" data-action="share" type="button" aria-label="Share your artwork">↗ <span>Share</span></button>
+      <button class="button live-adjust" id="drawer-open" type="button" aria-label="Open adjustments" aria-expanded="false">☷ <span>Adjust</span></button>
+      <button class="button live-admin" id="live-admin" type="button" aria-label="Admin settings">⚙</button>
+    </div>
+  </div>
   <div class="workspace-toolbar">
     <div class="artwork-stats" aria-live="polite">
       <span><strong id="stat-tiles">0</strong> tiles</span>
@@ -18,6 +32,16 @@
     </div>
   </div>
   <div class="artboard-stage" id="stage">
+    <div class="empty-state" id="empty-state">
+      <div class="empty-mark" aria-hidden="true"><span>▦</span></div>
+      <p class="eyebrow">Your photo, reimagined</p>
+      <h2>Make a portrait into pixels.</h2>
+      <p>Take a photo with the camera or choose one from this device. Your image never leaves the screen.</p>
+      <div class="empty-actions">
+        <button class="button button-primary" id="empty-camera" type="button">◎ &nbsp;Start camera</button>
+        <button class="button button-quiet" id="empty-upload" type="button">↑ &nbsp;Choose photo</button>
+      </div>
+    </div>
     <div class="artboard-transform" id="artboard-transform">
       <div class="artboard artboard-dark" id="artboard">
         <div id="svg-output" aria-label="Generated square mosaic artwork"></div>
@@ -25,5 +49,25 @@
       </div>
     </div>
     <div class="stage-hint"><span class="hint-dot" id="hint-dot"></span><span id="hint-text">Drag to move · Scroll to zoom</span></div>
+    <div class="live-camera-prompt is-hidden" id="live-camera-prompt">
+      <div class="live-prompt-card">
+        <span class="live-prompt-mark" aria-hidden="true">◎</span>
+        <p class="eyebrow">Welcome to <span id="live-prompt-brand">Pixel Studio</span></p>
+        <h2 id="live-prompt-title">Ready for your pixel portrait?</h2>
+        <p id="live-prompt-copy">Step in front of the camera. Your live mosaic stays right here on this device.</p>
+        <div class="live-prompt-actions">
+          <button class="button button-primary" id="live-start-camera" type="button">Start live camera</button>
+          <button class="button button-quiet" id="live-upload" type="button">Use a photo instead</button>
+        </div>
+        <p class="live-camera-error is-hidden" id="live-camera-error" role="status"></p>
+      </div>
+    </div>
+    <div class="gesture-countdown is-hidden" id="gesture-countdown" aria-live="assertive">
+      <span class="gesture-count" id="gesture-count">3</span>
+      <span class="gesture-label">Hold still — your portrait is coming</span>
+    </div>
+    <div class="freeze-preview-actions is-hidden" id="freeze-preview-actions">
+      <button class="button live-secondary" id="return-to-live" type="button">Return to live</button>
+    </div>
   </div>
 </main>

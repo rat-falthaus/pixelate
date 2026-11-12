@@ -1,11 +1,24 @@
+import { HandLandmarker } from '@mediapipe/tasks-vision';
 import { getActiveTheme, loadConfig, saveConfig } from '../lib/config';
 import { isAllowedPaletteColor } from '../lib/color';
+import { createHandLandmarker, isOpenPalm } from '../lib/gesture';
+import {
+  deleteBrandAsset,
+  deleteGalleryFreeze,
+  getBrandAsset,
+  getGalleryFreeze,
+  listGalleryFreezes,
+  saveBrandAsset,
+  saveGalleryFreeze,
+} from '../lib/local-store';
 import { mapClustersToTheme, sampleImage } from '../lib/sampling';
 import { createArtworkSvg } from '../lib/svg';
+import type { GalleryFreeze } from '../lib/local-store';
 import type {
   AppModel,
   BackgroundMode,
   BrandTheme,
+  ImageSource,
   MessagePosition,
   SamplingOptions,
   TileOverride,
@@ -35,9 +48,14 @@ const model: AppModel = {
   randomSeed: 4219,
   messageEnabled: true,
   message: config.defaultMessage,
-  messagePosition: 'upper',
+  messagePosition: config.messagePosition,
   messageOrigin: null,
+  logoOrigin: null,
   messageScale: 100,
+  logoDataUrl: null,
+  logoAspectRatio: 1,
+  fontFamily: 'Arial, Helvetica, sans-serif',
+  fontDataUri: null,
   showBadge: true,
   clusters: [],
   cells: [],
@@ -56,6 +74,8 @@ const model: AppModel = {
   panX: 0,
   panY: 0,
   showOriginal: false,
+  liveCameraActive: false,
+  freezePreview: false,
 };
 
 const elements = {
@@ -66,7 +86,6 @@ const elements = {
   sourceThumb: $('source-thumb') as HTMLImageElement,
   fileName: $('file-name'),
   sourceDimensions: $('source-dimensions'),
-  sampleSelect: $('sample-select') as HTMLSelectElement,
   subjectEnabled: $('subject-enabled') as HTMLInputElement,
   subjectControls: $('subject-controls'),
   subjectThreshold: $('subject-threshold') as HTMLInputElement,
@@ -103,6 +122,17 @@ const elements = {
   artboard: $('artboard'),
   svgOutput: $('svg-output'),
   originalPhoto: $('original-photo') as HTMLImageElement,
+  emptyState: $('empty-state'),
+  liveIndicator: $('live-indicator'),
+  liveBrandTitle: $('live-brand-title'),
+  liveStatus: $('live-status'),
+  livePrompt: $('live-camera-prompt'),
+  livePromptBrand: $('live-prompt-brand'),
+  livePromptTitle: $('live-prompt-title'),
+  livePromptCopy: $('live-prompt-copy'),
+  liveCameraError: $('live-camera-error'),
+  liveCameraVideo: $('live-camera-video') as HTMLVideoElement,
+  drawerBackdrop: $('drawer-backdrop'),
   zoomSlider: $('zoom-slider') as HTMLInputElement,
   zoomValue: $('zoom-value'),
   comparePhoto: $('compare-photo') as HTMLButtonElement,
@@ -113,15 +143,31 @@ const elements = {
   cameraDialog: $('camera-dialog') as HTMLDialogElement,
   cameraVideo: $('camera-video') as HTMLVideoElement,
   cameraStatus: $('camera-status'),
+  shareDialog: $('share-dialog') as HTMLDialogElement,
+  shareNative: $('share-native') as HTMLButtonElement,
+  shareHelp: $('share-help'),
   toast: $('toast'),
 };
 
 let activeImageUrl: string | null = null;
 let cameraStream: MediaStream | null = null;
+let liveCameraStream: MediaStream | null = null;
+let liveFrameCanvas: HTMLCanvasElement | null = null;
+let liveFrameRequest = 0;
+let lastLiveFrameAt = 0;
 let toastTimer = 0;
 let processFrame = 0;
 let pointerStart: { x: number; y: number; panX: number; panY: number } | null = null;
 let messageDragOffset = { col: 0, row: 0 };
+let logoDragOffset = { col: 0, row: 0 };
+let handLandmarker: HandLandmarker | null = null;
+let gestureStartedAt = 0;
+let gesturePalmPoint: { x: number; y: number } | null = null;
+let lastGestureFrameAt = 0;
+let gestureCountdownTimer = 0;
+let freezePreviewTimer = 0;
+let galleryObjectUrls: string[] = [];
+const selectedGalleryIds = new Set<string>();
 let painting = false;
 let pendingSubjectEdit = false;
 
@@ -130,6 +176,31 @@ function notify(message: string): void {
   elements.toast.classList.add('is-visible');
   window.clearTimeout(toastTimer);
   toastTimer = window.setTimeout(() => elements.toast.classList.remove('is-visible'), 2600);
+}
+
+function updateLiveUi(): void {
+  const fairMode = model.config.fairMode;
+  const hasArtwork = Boolean(model.image);
+  elements.liveBrandTitle.textContent = model.config.applicationTitle;
+  elements.livePromptBrand.textContent = model.config.applicationTitle;
+  elements.emptyState.classList.toggle('is-hidden', hasArtwork || fairMode);
+  elements.livePrompt.classList.toggle('is-hidden', !fairMode || hasArtwork);
+  elements.liveIndicator.classList.toggle('is-active', model.liveCameraActive);
+  elements.liveStatus.textContent = model.liveCameraActive
+    ? model.freezePreview ? 'Portrait preview' : 'Live portrait'
+    : hasArtwork ? 'Portrait ready' : 'Fair portrait studio';
+  $('live-camera-label').textContent = model.liveCameraActive ? 'Snap & freeze' : 'New portrait';
+  $('live-camera').setAttribute('aria-label', model.liveCameraActive ? 'Freeze this portrait' : 'Start a new portrait');
+  $('return-to-live').classList.toggle('is-hidden', !model.freezePreview);
+  $('drawer-open').setAttribute('aria-expanded', String(document.body.classList.contains('drawer-open')));
+  document.querySelectorAll<HTMLButtonElement>('[data-position]').forEach((button) => {
+    button.disabled = model.config.messagePositionLocked;
+  });
+}
+
+function setDrawerOpen(open: boolean): void {
+  document.body.classList.toggle('drawer-open', open);
+  $('drawer-open').setAttribute('aria-expanded', String(open));
 }
 
 function persistSettings(): void {
@@ -212,6 +283,12 @@ function renderArtwork(): void {
     messageScale: model.messageScale,
     brandSignature: model.config.brandSignature,
     showBadge: model.showBadge,
+    logoDataUrl: model.logoDataUrl,
+    logoAspectRatio: model.logoAspectRatio,
+    logoPosition: model.config.logoPosition,
+    logoOrigin: model.logoOrigin,
+    fontFamily: model.config.useUploadedFont ? model.fontFamily : 'Arial, Helvetica, sans-serif',
+    fontDataUri: model.config.useUploadedFont ? model.fontDataUri : null,
   });
   model.currentSvg = result.markup;
   elements.svgOutput.innerHTML = result.markup;
@@ -344,8 +421,16 @@ function setTool(tool: ToolMode): void {
 }
 
 function applyWorkspaceSettings(): void {
+  if (!model.config.fairMode && model.liveCameraActive) stopLiveCamera(true);
+  if (!model.config.fairMode && document.fullscreenElement) {
+    void document.exitFullscreen().catch((error: unknown) => {
+      console.error('Could not exit fullscreen mode.', error);
+      notify('Could not leave fullscreen mode. Press Escape to exit.');
+    });
+  }
   const theme = getActiveTheme(model.config);
   elements.brandTitle.textContent = model.config.applicationTitle;
+  document.title = `${model.config.applicationTitle} — Photo to SVG`;
   elements.modeLabel.textContent = model.config.fairMode
     ? 'Fair kiosk'
     : model.config.enforceTheme ? theme.name : 'Free palette';
@@ -376,8 +461,11 @@ function applyWorkspaceSettings(): void {
     'is-hidden',
     model.config.enforceTheme || model.config.fairMode,
   );
+  updateLiveUi();
+  if (model.config.fairMode) setDrawerOpen(false);
   renderMapping();
   rebuildArtwork();
+  if (model.image) requestAnimationFrame(fitArtboard);
 }
 
 function setBackground(background: BackgroundMode): void {
@@ -411,7 +499,14 @@ function fitArtboard(): void {
   const width = model.gridCols * model.tileSize;
   const height = model.gridRows * model.tileSize;
   if (!width || !height || !stage.width || !stage.height) return;
-  model.zoom = Math.max(0.15, Math.min(2.5, (Math.min(stage.width, stage.height) - 72) / Math.max(width, height)));
+  const padding = model.config.fairMode ? 0 : 72;
+  model.zoom = Math.max(0.15, Math.min(
+    2.5,
+    Math.min(
+      Math.max(1, stage.width - padding) / width,
+      Math.max(1, stage.height - padding) / height,
+    ),
+  ));
   model.panX = 0;
   model.panY = 0;
   updateViewportTransform();
@@ -459,7 +554,33 @@ function revokeActiveImageUrl(): void {
   activeImageUrl = null;
 }
 
+function setImageSource(image: ImageSource, fileName: string, previewUrl?: string): void {
+  revokeActiveImageUrl();
+  activeImageUrl = previewUrl?.startsWith('blob:') ? previewUrl : null;
+  model.image = image;
+  model.fileName = fileName.replace(/\.[^.]+$/, '') || 'pixel-artwork';
+  model.manualSubjectMask.clear();
+  model.manualTileOverrides.clear();
+  model.tileUndoStack = [];
+  model.messageOrigin = null;
+  model.showOriginal = false;
+  const width = image instanceof HTMLImageElement ? image.naturalWidth || image.width : image.width;
+  const height = image instanceof HTMLImageElement ? image.naturalHeight || image.height : image.height;
+  const preview = previewUrl ?? (image instanceof HTMLCanvasElement ? image.toDataURL('image/png') : image.src);
+  elements.fileName.textContent = fileName;
+  elements.sourceDimensions.textContent = `${width} × ${height}`;
+  elements.sourceThumb.src = preview;
+  elements.originalPhoto.src = preview;
+  elements.originalPhoto.hidden = true;
+  elements.comparePhoto.textContent = 'Compare photo';
+  $('reset-mask').classList.add('is-hidden');
+  renderUndoControls();
+  updateLiveUi();
+  rebuildArtwork(true);
+}
+
 async function loadImage(source: string, fileName: string, sourceUrl?: string): Promise<void> {
+  if (model.liveCameraActive) stopLiveCamera(false);
   const image = new Image();
   await new Promise<void>((resolve, reject) => {
     image.onload = () => resolve();
@@ -472,122 +593,7 @@ async function loadImage(source: string, fileName: string, sourceUrl?: string): 
   if (image.naturalWidth * image.naturalHeight > 40_000_000) {
     throw new Error('This image is larger than 40 megapixels. Choose a smaller image.');
   }
-  revokeActiveImageUrl();
-  activeImageUrl = sourceUrl ?? source;
-  model.image = image;
-  model.fileName = fileName.replace(/\.[^.]+$/, '') || 'pixel-artwork';
-  model.manualSubjectMask.clear();
-  model.manualTileOverrides.clear();
-  model.tileUndoStack = [];
-  model.messageOrigin = null;
-  model.showOriginal = false;
-  elements.fileName.textContent = fileName;
-  elements.sourceDimensions.textContent = `${image.naturalWidth} × ${image.naturalHeight}`;
-  elements.sourceThumb.src = source;
-  elements.originalPhoto.src = source;
-  elements.originalPhoto.hidden = true;
-  elements.comparePhoto.textContent = 'Compare photo';
-  $('reset-mask').classList.add('is-hidden');
-  renderUndoControls();
-  rebuildArtwork(true);
-}
-
-function drawSample(name: string): HTMLCanvasElement {
-  const canvas = document.createElement('canvas');
-  const context = canvas.getContext('2d');
-  if (!context) throw new Error('This browser could not create the sample artwork.');
-  canvas.width = name === 'architecture' ? 540 : 600;
-  canvas.height = name === 'architecture' ? 780 : 600;
-
-  if (name === 'architecture') {
-    const sky = context.createLinearGradient(0, 0, 0, canvas.height);
-    sky.addColorStop(0, '#18395B');
-    sky.addColorStop(0.55, '#2584A9');
-    sky.addColorStop(1, '#101B27');
-    context.fillStyle = sky;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = '#F2C94C';
-    context.fillRect(42, 42, 110, 82);
-    context.fillStyle = '#56CCF2';
-    context.fillRect(220, 68, 128, 104);
-    context.fillStyle = '#EB5757';
-    context.fillRect(400, 40, 92, 82);
-    context.fillStyle = '#111311';
-    context.fillRect(0, 450, canvas.width, 330);
-    context.fillStyle = '#F2C94C';
-    context.fillRect(62, 564, 195, 137);
-    context.fillStyle = '#2F80ED';
-    context.beginPath();
-    context.moveTo(50, 570); context.lineTo(142, 510); context.lineTo(268, 570);
-    context.closePath(); context.fill();
-    context.fillStyle = '#EB5757';
-    for (let index = 0; index < 5; index += 1) {
-      const x = 278 + index * 48;
-      context.fillRect(x, 598, 42, 52);
-      context.beginPath(); context.moveTo(x - 3, 598); context.lineTo(x + 21, 568); context.lineTo(x + 45, 598); context.fill();
-    }
-    context.fillStyle = '#F2994A';
-    context.fillRect(260, 650, 265, 50);
-    context.fillStyle = '#080A09';
-    [78, 111, 152, 194, 300, 348, 396, 444].forEach((x) => context.fillRect(x, 610, 12, 42));
-    context.fillStyle = '#2F80ED';
-    context.fillRect(26, 720, 470, 40);
-  } else if (name === 'portrait') {
-    context.fillStyle = '#1C2A36';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    const face = context.createRadialGradient(280, 240, 16, 300, 270, 210);
-    face.addColorStop(0, '#F2C94C');
-    face.addColorStop(0.42, '#F2994A');
-    face.addColorStop(0.78, '#EB5757');
-    face.addColorStop(1, '#2F80ED');
-    context.fillStyle = face;
-    context.beginPath();
-    context.ellipse(300, 266, 145, 184, 0, 0, Math.PI * 2);
-    context.fill();
-    context.fillStyle = '#080A09';
-    context.fillRect(222, 226, 58, 28);
-    context.fillRect(320, 226, 58, 28);
-    context.fillRect(280, 236, 40, 9);
-    context.fillStyle = '#56CCF2';
-    context.beginPath();
-    context.roundRect(110, 455, 380, 185, [80, 80, 0, 0]);
-    context.fill();
-    context.fillStyle = '#9B51E0';
-    context.fillRect(236, 455, 128, 145);
-  } else {
-    const sky = context.createLinearGradient(0, 0, 0, 480);
-    sky.addColorStop(0, '#25214A');
-    sky.addColorStop(0.45, '#9B51E0');
-    sky.addColorStop(0.78, '#EB5757');
-    sky.addColorStop(1, '#F2C94C');
-    context.fillStyle = sky;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.fillStyle = '#F2C94C';
-    context.beginPath(); context.arc(300, 275, 112, 0, Math.PI * 2); context.fill();
-    context.fillStyle = '#17242B';
-    context.beginPath();
-    context.moveTo(0, 440); context.lineTo(160, 280); context.lineTo(300, 408);
-    context.lineTo(455, 240); context.lineTo(600, 400); context.lineTo(600, 600);
-    context.lineTo(0, 600); context.closePath(); context.fill();
-    context.fillStyle = '#2F80ED';
-    context.fillRect(0, 506, 600, 94);
-    context.fillStyle = '#56CCF2';
-    context.fillRect(54, 530, 190, 18);
-    context.fillRect(355, 566, 170, 14);
-  }
-  return canvas;
-}
-
-async function loadSample(name: string): Promise<void> {
-  const canvas = drawSample(name);
-  const imageData = canvas.toDataURL('image/png');
-  await loadImage(imageData, `sample-${name}.png`);
-  model.messageOrigin = null;
-  model.messagePosition = name === 'architecture' ? 'upper' : 'lower';
-  document.querySelectorAll<HTMLButtonElement>('[data-position]').forEach((button) => {
-    button.classList.toggle('is-selected', button.dataset.position === model.messagePosition);
-  });
-  renderArtwork();
+  setImageSource(image, fileName, sourceUrl ?? source);
 }
 
 async function openFile(file: File): Promise<void> {
@@ -616,6 +622,17 @@ function renderAdminSettings(): void {
   ($('setting-title') as HTMLInputElement).value = model.config.applicationTitle;
   ($('setting-signature') as HTMLInputElement).value = model.config.brandSignature;
   ($('setting-message') as HTMLTextAreaElement).value = model.config.defaultMessage;
+  ($('setting-message-position') as HTMLSelectElement).value = model.config.messagePosition;
+  ($('setting-lock-message-position') as HTMLInputElement).checked = model.config.messagePositionLocked;
+  ($('setting-logo-position') as HTMLSelectElement).value = model.config.logoPosition;
+  ($('setting-lock-logo-position') as HTMLInputElement).checked = model.config.logoPositionLocked;
+  ($('setting-clear-gallery') as HTMLInputElement).checked = model.config.clearGalleryAfterShare;
+  ($('setting-gallery-delay') as HTMLInputElement).value = String(model.config.galleryClearDelaySeconds);
+  ($('setting-font-choice') as HTMLSelectElement).value = model.config.useUploadedFont ? 'uploaded' : 'system';
+  $('setting-font-name').textContent = model.fontDataUri ? 'Uploaded font ready' : 'System font';
+  const logoPreview = $('setting-logo-preview') as HTMLImageElement;
+  logoPreview.src = model.logoDataUrl ?? '';
+  logoPreview.classList.toggle('is-hidden', !model.logoDataUrl);
   ($('setting-dark-cutoff') as HTMLInputElement).value = String(model.config.darkCutoffPercent);
   ($('setting-light-cutoff') as HTMLInputElement).value = String(model.config.lightCutoffPercent);
   ($('setting-hairlines') as HTMLInputElement).checked = model.config.hairlines;
@@ -714,6 +731,16 @@ function applyAdminSettings(): void {
   model.config.applicationTitle = title || 'Pixel Studio';
   model.config.brandSignature = signature;
   model.config.defaultMessage = defaultMessage;
+  model.config.messagePosition = ($('setting-message-position') as HTMLSelectElement).value as MessagePosition;
+  model.config.messagePositionLocked = ($('setting-lock-message-position') as HTMLInputElement).checked;
+  model.config.logoPosition = ($('setting-logo-position') as HTMLSelectElement).value as MessagePosition;
+  model.config.logoPositionLocked = ($('setting-lock-logo-position') as HTMLInputElement).checked;
+  model.config.clearGalleryAfterShare = ($('setting-clear-gallery') as HTMLInputElement).checked;
+  model.config.galleryClearDelaySeconds = Math.max(
+    0,
+    Math.min(30, Number(($('setting-gallery-delay') as HTMLInputElement).value) || 0),
+  );
+  model.config.useUploadedFont = ($('setting-font-choice') as HTMLSelectElement).value === 'uploaded';
   model.config.darkCutoffPercent = Number(($('setting-dark-cutoff') as HTMLInputElement).value);
   model.config.lightCutoffPercent = Number(($('setting-light-cutoff') as HTMLInputElement).value);
   model.config.hairlines = ($('setting-hairlines') as HTMLInputElement).checked;
@@ -730,12 +757,329 @@ function applyAdminSettings(): void {
     model.config.permissions[permission as keyof typeof model.config.permissions] = ($(id) as HTMLInputElement).checked;
   });
   model.message = defaultMessage;
+  model.messagePosition = model.config.messagePosition;
   model.messageOrigin = null;
+  model.logoOrigin = null;
   elements.messageText.value = defaultMessage;
   persistSettings();
   elements.adminDialog.close();
   applyWorkspaceSettings();
+  renderArtwork();
   notify('Brand and kiosk settings applied.');
+}
+
+function readBlobAsDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') resolve(reader.result);
+      else reject(new Error('The local brand asset could not be read.'));
+    };
+    reader.onerror = () => reject(reader.error ?? new Error('The local brand asset could not be read.'));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function rasterizeLogo(blob: Blob): Promise<{ blob: Blob; dataUrl: string; width: number; height: number }> {
+  const objectUrl = URL.createObjectURL(blob);
+  const image = new Image();
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('The logo could not be decoded.'));
+      image.src = objectUrl;
+    });
+    const scale = Math.min(1, 2048 / Math.max(image.naturalWidth, image.naturalHeight));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
+    canvas.height = Math.max(1, Math.round(image.naturalHeight * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('This browser could not prepare the logo image.');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    const raster = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => result ? resolve(result) : reject(new Error('The logo image could not be prepared.')), 'image/png');
+    });
+    return {
+      blob: raster,
+      dataUrl: await readBlobAsDataUrl(raster),
+      width: canvas.width,
+      height: canvas.height,
+    };
+  } finally {
+    URL.revokeObjectURL(objectUrl);
+  }
+}
+
+async function sanitizeSvgLogo(file: File): Promise<Blob> {
+  const source = await file.text();
+  if (/<!DOCTYPE|<!ENTITY/i.test(source)) throw new Error('SVG logos cannot contain document declarations.');
+  const documentSvg = new DOMParser().parseFromString(source, 'image/svg+xml');
+  if (documentSvg.querySelector('parsererror')
+    || documentSvg.documentElement.localName !== 'svg'
+    || documentSvg.documentElement.namespaceURI !== 'http://www.w3.org/2000/svg') {
+    throw new Error('Choose a valid SVG logo.');
+  }
+  const prohibited = new Set([
+    'script', 'style', 'foreignObject', 'iframe', 'object', 'embed', 'audio', 'video',
+    'animate', 'animateMotion', 'animateTransform', 'set',
+  ]);
+  for (const element of [documentSvg.documentElement, ...Array.from(documentSvg.querySelectorAll('*'))]) {
+    if (prohibited.has(element.localName)) throw new Error('SVG logos cannot contain active content.');
+    for (const attribute of Array.from(element.attributes)) {
+      const name = attribute.name.toLowerCase();
+      const value = attribute.value.trim();
+      if (name.startsWith('on') || name === 'style' || name === 'xml:base') {
+        throw new Error('SVG logos cannot contain scripts, inline styles, or remote content.');
+      }
+      if ((name === 'href' || name.endsWith(':href')) && value && !value.startsWith('#')) {
+        throw new Error('SVG logos cannot reference external files.');
+      }
+      if (/url\s*\(/i.test(value) && !/^url\(\s*#[\w.-]+\s*\)$/i.test(value)) {
+        throw new Error('SVG logos cannot reference external files.');
+      }
+    }
+  }
+  return new Blob([new XMLSerializer().serializeToString(documentSvg.documentElement)], {
+    type: 'image/svg+xml',
+  });
+}
+
+async function uploadLogo(file: File): Promise<void> {
+  if (file.size > 5 * 1024 * 1024) throw new Error('Logo files must be 5 MB or smaller.');
+  const source = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg')
+    ? await sanitizeSvgLogo(file)
+    : file;
+  const raster = await rasterizeLogo(source);
+  const asset = await saveBrandAsset({
+    kind: 'logo',
+    name: file.name,
+    type: raster.blob.type,
+    blob: raster.blob,
+    width: raster.width,
+    height: raster.height,
+  });
+  if (model.config.logoAssetId) await deleteBrandAsset(model.config.logoAssetId);
+  model.config.logoAssetId = asset.id;
+  model.logoDataUrl = raster.dataUrl;
+  model.logoAspectRatio = raster.width / raster.height;
+  model.logoOrigin = null;
+  persistSettings();
+  const preview = $('setting-logo-preview') as HTMLImageElement;
+  preview.src = raster.dataUrl;
+  preview.classList.remove('is-hidden');
+  renderArtwork();
+  notify('Brand logo saved on this device.');
+}
+
+async function uploadFont(file: File): Promise<void> {
+  if (file.size > 10 * 1024 * 1024) throw new Error('Font files must be 10 MB or smaller.');
+  const allowedTypes = new Set(['font/woff2', 'font/woff', 'font/ttf', 'font/otf', 'application/font-woff', 'application/octet-stream']);
+  if (!allowedTypes.has(file.type) && !/\.(woff2?|ttf|otf)$/i.test(file.name)) {
+    throw new Error('Choose a WOFF2, WOFF, TTF, or OTF font file.');
+  }
+  const blobUrl = URL.createObjectURL(file);
+  try {
+    const face = new FontFace('BrandUploaded', `url("${blobUrl}")`);
+    await face.load();
+    document.fonts.add(face);
+    const asset = await saveBrandAsset({
+      kind: 'font',
+      name: file.name,
+      type: file.type || 'application/octet-stream',
+      blob: file,
+    });
+    if (model.config.fontAssetId) await deleteBrandAsset(model.config.fontAssetId);
+    model.config.fontAssetId = asset.id;
+    model.config.useUploadedFont = true;
+    model.fontFamily = 'BrandUploaded';
+    model.fontDataUri = await readBlobAsDataUrl(file);
+    persistSettings();
+    $('setting-font-name').textContent = file.name;
+    ($('setting-font-choice') as HTMLSelectElement).value = 'uploaded';
+    renderArtwork();
+    notify('Uploaded font saved on this device.');
+  } finally {
+    URL.revokeObjectURL(blobUrl);
+  }
+}
+
+async function loadBrandAssets(): Promise<void> {
+  if (model.config.logoAssetId) {
+    const asset = await getBrandAsset(model.config.logoAssetId);
+    if (asset?.kind === 'logo') {
+      const raster = await rasterizeLogo(asset.blob);
+      model.logoDataUrl = raster.dataUrl;
+      model.logoAspectRatio = asset.width && asset.height ? asset.width / asset.height : raster.width / raster.height;
+    }
+  }
+
+  if (model.config.fontAssetId) {
+    const asset = await getBrandAsset(model.config.fontAssetId);
+    if (asset?.kind === 'font') {
+      const objectUrl = URL.createObjectURL(asset.blob);
+      try {
+        const face = new FontFace('BrandUploaded', `url("${objectUrl}")`);
+        await face.load();
+        document.fonts.add(face);
+        model.fontDataUri = await readBlobAsDataUrl(asset.blob);
+        model.fontFamily = 'BrandUploaded';
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+  }
+}
+
+function revokeGalleryObjectUrls(): void {
+  galleryObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+  galleryObjectUrls = [];
+}
+
+async function refreshGallery(): Promise<void> {
+  const freezes = await listGalleryFreezes();
+  const grid = $('gallery-grid');
+  revokeGalleryObjectUrls();
+  grid.replaceChildren();
+  $('gallery-count').textContent = String(freezes.length);
+  $('gallery-empty').classList.toggle('is-hidden', freezes.length > 0);
+
+  freezes.forEach((freeze, index) => {
+    const url = URL.createObjectURL(freeze.blob);
+    galleryObjectUrls.push(url);
+    const card = document.createElement('article');
+    card.className = `gallery-card${selectedGalleryIds.has(freeze.id) ? ' is-selected' : ''}`;
+    card.draggable = true;
+    card.dataset.freezeId = freeze.id;
+
+    const preview = document.createElement('img');
+    preview.src = url;
+    preview.alt = `Saved pixel portrait ${index + 1}`;
+    preview.addEventListener('click', () => void previewGalleryFreeze(freeze));
+
+    const controls = document.createElement('div');
+    controls.className = 'gallery-card-controls';
+    const label = document.createElement('label');
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.checked = selectedGalleryIds.has(freeze.id);
+    checkbox.setAttribute('aria-label', `Select portrait ${index + 1} to share`);
+    checkbox.addEventListener('change', () => {
+      if (checkbox.checked) selectedGalleryIds.add(freeze.id);
+      else selectedGalleryIds.delete(freeze.id);
+      card.classList.toggle('is-selected', checkbox.checked);
+      updateGallerySelection();
+    });
+    const date = document.createElement('span');
+    date.textContent = new Date(freeze.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    label.append(checkbox, date);
+
+    const previewButton = document.createElement('button');
+    previewButton.type = 'button';
+    previewButton.className = 'button button-quiet gallery-preview-button';
+    previewButton.textContent = 'Preview';
+    previewButton.addEventListener('click', () => void previewGalleryFreeze(freeze));
+    controls.append(label, previewButton);
+    card.addEventListener('dragstart', (event) => {
+      event.dataTransfer?.setData('text/plain', freeze.id);
+      if (event.dataTransfer) event.dataTransfer.effectAllowed = 'copy';
+    });
+    let touchDragStart: { x: number; y: number; moved: boolean } | null = null;
+    preview.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'mouse') return;
+      touchDragStart = { x: event.clientX, y: event.clientY, moved: false };
+      preview.setPointerCapture(event.pointerId);
+    });
+    preview.addEventListener('pointermove', (event) => {
+      if (!touchDragStart) return;
+      if (Math.hypot(event.clientX - touchDragStart.x, event.clientY - touchDragStart.y) > 12) {
+        touchDragStart.moved = true;
+      }
+    });
+    preview.addEventListener('pointerup', (event) => {
+      if (!touchDragStart) return;
+      const { moved } = touchDragStart;
+      touchDragStart = null;
+      if (!moved) return;
+      event.preventDefault();
+      const bounds = elements.stage.getBoundingClientRect();
+      if (event.clientX >= bounds.left && event.clientX <= bounds.right
+        && event.clientY >= bounds.top && event.clientY <= bounds.bottom) {
+        void previewGalleryFreeze(freeze);
+      }
+    });
+    preview.addEventListener('pointercancel', () => { touchDragStart = null; });
+    card.append(preview, controls);
+    grid.append(card);
+  });
+  updateGallerySelection();
+}
+
+function updateGallerySelection(): void {
+  const count = selectedGalleryIds.size;
+  $('gallery-selection-count').textContent = `${count} selected`;
+  ($('gallery-share') as HTMLButtonElement).disabled = count === 0;
+}
+
+async function openGallery(): Promise<void> {
+  try {
+    await refreshGallery();
+    $('gallery-overlay').classList.remove('is-hidden');
+  } catch (error) {
+    console.error('The local portrait gallery could not be opened.', error);
+    notify(error instanceof Error ? error.message : 'The portrait gallery could not be opened.');
+  }
+}
+
+async function shareSelectedGalleryFreezes(): Promise<void> {
+  if (!navigator.share) {
+    try {
+      const freezes = await listGalleryFreezes();
+      const selected = freezes.filter((freeze) => selectedGalleryIds.has(freeze.id));
+      if (!selected.length) {
+        notify('Select at least one portrait to save.');
+        return;
+      }
+      selected.forEach((freeze, index) => downloadBlob(freeze.blob, `pixel-portrait-${index + 1}.png`));
+    } catch (error) {
+      notify(error instanceof Error ? error.message : 'Selected portraits could not be saved.');
+    }
+    return;
+  }
+  try {
+    const freezes = await listGalleryFreezes();
+    const selected = freezes.filter((freeze) => selectedGalleryIds.has(freeze.id));
+    if (!selected.length) {
+      notify('Select at least one portrait to share.');
+      return;
+    }
+    const files = selected.map((freeze, index) => (
+      new File([freeze.blob], `pixel-portrait-${index + 1}.png`, { type: 'image/png' })
+    ));
+    if (!navigator.canShare?.({ files })) {
+      notify('This device cannot share the selected image files.');
+      return;
+    }
+    await navigator.share({ files, title: model.config.applicationTitle });
+    $('gallery-overlay').classList.add('is-hidden');
+    if (model.config.clearGalleryAfterShare) {
+      const ids = selected.map((freeze) => freeze.id);
+      window.setTimeout(() => {
+        void Promise.all(ids.map((id) => deleteGalleryFreeze(id)))
+          .then(() => {
+            ids.forEach((id) => selectedGalleryIds.delete(id));
+            return refreshGallery();
+          })
+          .catch((error: unknown) => {
+            console.error('Shared gallery portraits could not be removed.', error);
+            notify('Shared portraits could not be removed from local storage.');
+          });
+      }, model.config.galleryClearDelaySeconds * 1000);
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    console.error('Selected gallery portraits could not be shared.', error);
+    notify(error instanceof Error ? error.message : 'Selected portraits could not be shared.');
+  }
 }
 
 function openAdminGate(): void {
@@ -810,8 +1154,337 @@ async function capturePhoto(): Promise<void> {
   }
 }
 
+function drawCameraFrame(video: HTMLVideoElement, canvas: HTMLCanvasElement, outputHeight: number): boolean {
+  if (!video.videoWidth || !video.videoHeight) return false;
+  const aspectRatio = Math.max(0.5, Math.min(3, window.innerWidth / Math.max(1, window.innerHeight)));
+  const sourceAspectRatio = video.videoWidth / video.videoHeight;
+  let sx = 0;
+  let sy = 0;
+  let sourceWidth = video.videoWidth;
+  let sourceHeight = video.videoHeight;
+  if (sourceAspectRatio > aspectRatio) {
+    sourceWidth = video.videoHeight * aspectRatio;
+    sx = (video.videoWidth - sourceWidth) / 2;
+  } else {
+    sourceHeight = video.videoWidth / aspectRatio;
+    sy = (video.videoHeight - sourceHeight) / 2;
+  }
+
+  canvas.width = Math.round(outputHeight * aspectRatio);
+  canvas.height = outputHeight;
+  const context = canvas.getContext('2d');
+  if (!context) throw new Error('This browser could not prepare the camera image.');
+  context.save();
+  context.translate(canvas.width, 0);
+  context.scale(-1, 1);
+  context.drawImage(video, sx, sy, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
+  context.restore();
+  return true;
+}
+
+function updateLiveFrame(timestamp: number): void {
+  if (!model.liveCameraActive || !liveFrameCanvas) return;
+  if (timestamp - lastLiveFrameAt >= 180) {
+    if (!model.freezePreview && elements.liveCameraVideo.videoWidth) {
+      const previousWidth = liveFrameCanvas.width;
+      const previousHeight = liveFrameCanvas.height;
+      if (drawCameraFrame(elements.liveCameraVideo, liveFrameCanvas, 900)) {
+        rebuildArtwork(previousWidth !== liveFrameCanvas.width || previousHeight !== liveFrameCanvas.height);
+      }
+    }
+    lastLiveFrameAt = timestamp;
+  }
+  if (!model.freezePreview && handLandmarker && timestamp - lastGestureFrameAt >= 140) {
+    lastGestureFrameAt = timestamp;
+    if (elements.liveCameraVideo.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA) {
+      const result = handLandmarker.detectForVideo(elements.liveCameraVideo, timestamp);
+      if (result.landmarks[0] && isOpenPalm(result.landmarks[0])) {
+        const wrist = result.landmarks[0][0];
+        if (gesturePalmPoint && Math.hypot(wrist.x - gesturePalmPoint.x, wrist.y - gesturePalmPoint.y) > 0.08) {
+          gestureStartedAt = 0;
+        }
+        gesturePalmPoint = { x: wrist.x, y: wrist.y };
+        if (!gestureStartedAt) gestureStartedAt = timestamp;
+        if (timestamp - gestureStartedAt >= 700) beginFreezeCountdown();
+      } else {
+        gestureStartedAt = 0;
+        gesturePalmPoint = null;
+      }
+    }
+  }
+  liveFrameRequest = requestAnimationFrame(updateLiveFrame);
+}
+
+function stopLiveCamera(freeze: boolean): void {
+  const shouldFreeze = freeze && model.liveCameraActive;
+  let frozenFrame: HTMLCanvasElement | null = null;
+  if (shouldFreeze && liveFrameCanvas && elements.liveCameraVideo.videoWidth) {
+    frozenFrame = document.createElement('canvas');
+    if (!drawCameraFrame(elements.liveCameraVideo, frozenFrame, 1500)) frozenFrame = null;
+  }
+
+  model.liveCameraActive = false;
+  model.freezePreview = false;
+  gestureStartedAt = 0;
+  gesturePalmPoint = null;
+  window.clearInterval(gestureCountdownTimer);
+  window.clearTimeout(freezePreviewTimer);
+  $('gesture-countdown').classList.add('is-hidden');
+  cancelAnimationFrame(liveFrameRequest);
+  liveFrameRequest = 0;
+  liveCameraStream?.getTracks().forEach((track) => track.stop());
+  liveCameraStream = null;
+  elements.liveCameraVideo.srcObject = null;
+  liveFrameCanvas = null;
+
+  if (frozenFrame) {
+    setImageSource(frozenFrame, `portrait-${new Date().toISOString().slice(0, 10)}.png`);
+  } else if (!freeze) {
+    model.image = null;
+    updateLiveUi();
+  } else {
+    updateLiveUi();
+  }
+}
+
+async function startLiveCamera(): Promise<void> {
+  elements.liveCameraError.classList.add('is-hidden');
+  if (!navigator.mediaDevices?.getUserMedia) {
+    elements.liveCameraError.textContent = 'Camera access is unavailable here. Choose a photo instead.';
+    elements.liveCameraError.classList.remove('is-hidden');
+    notify('Camera access is unavailable. Choose a photo instead.');
+    return;
+  }
+
+  let fullscreenRequest = Promise.resolve(Boolean(document.fullscreenElement));
+  if (!document.fullscreenElement && document.documentElement.requestFullscreen) {
+    try {
+      fullscreenRequest = document.documentElement.requestFullscreen().then(() => true).catch(() => false);
+    } catch {
+      fullscreenRequest = Promise.resolve(false);
+    }
+  }
+  let stream: MediaStream | null = null;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 960 } },
+      audio: false,
+    });
+    elements.liveCameraVideo.srcObject = stream;
+    await elements.liveCameraVideo.play();
+    if (!elements.liveCameraVideo.videoWidth) {
+      await new Promise<void>((resolve, reject) => {
+        const timeout = window.setTimeout(() => reject(new Error('The camera preview did not become ready.')), 5000);
+        elements.liveCameraVideo.addEventListener('loadeddata', () => {
+          window.clearTimeout(timeout);
+          resolve();
+        }, { once: true });
+      });
+    }
+
+    liveCameraStream = stream;
+    stream = null;
+    liveFrameCanvas = document.createElement('canvas');
+    if (!drawCameraFrame(elements.liveCameraVideo, liveFrameCanvas, 900)) {
+      throw new Error('The camera did not provide an image.');
+    }
+    try {
+      handLandmarker ??= await createHandLandmarker(import.meta.env.BASE_URL);
+    } catch (error) {
+      console.error('Offline hand gesture recognition could not be initialized.', error);
+      notify('Gesture recognition is unavailable. Use the capture button instead.');
+    }
+    model.liveCameraActive = true;
+    model.freezePreview = false;
+    setImageSource(liveFrameCanvas, 'live-portrait.png');
+    lastLiveFrameAt = 0;
+    liveFrameRequest = requestAnimationFrame(updateLiveFrame);
+    const enteredFullscreen = await fullscreenRequest;
+    notify(enteredFullscreen
+      ? 'Live portrait is ready. Tap “Snap & freeze” to keep it.'
+      : 'Live portrait is ready. Fullscreen is unavailable here; tap “Snap & freeze” to keep it.');
+  } catch (error) {
+    stream?.getTracks().forEach((track) => track.stop());
+    liveCameraStream?.getTracks().forEach((track) => track.stop());
+    liveCameraStream = null;
+    liveFrameCanvas = null;
+    elements.liveCameraVideo.srcObject = null;
+    model.liveCameraActive = false;
+    const message = error instanceof Error ? error.message : 'Camera access was denied.';
+    elements.liveCameraError.textContent = `${message} You can still choose a photo.`;
+    elements.liveCameraError.classList.remove('is-hidden');
+    updateLiveUi();
+    notify(`${message} You can still choose a photo.`);
+  }
+}
+
+function freezeLiveCamera(): void {
+  if (!model.liveCameraActive) {
+    void startLiveCamera();
+    return;
+  }
+  freezeLiveFrame();
+}
+
+function beginFreezeCountdown(): void {
+  if (!model.liveCameraActive || gestureCountdownTimer) return;
+  gestureStartedAt = 0;
+  gesturePalmPoint = null;
+  let count = 3;
+  $('gesture-count').textContent = String(count);
+  $('gesture-countdown').classList.remove('is-hidden');
+  gestureCountdownTimer = window.setInterval(() => {
+    count -= 1;
+    if (count > 0) {
+      $('gesture-count').textContent = String(count);
+      return;
+    }
+    window.clearInterval(gestureCountdownTimer);
+    gestureCountdownTimer = 0;
+    $('gesture-countdown').classList.add('is-hidden');
+    freezeLiveFrame();
+  }, 1000);
+}
+
+function freezeLiveFrame(): void {
+  if (!model.liveCameraActive || !liveFrameCanvas) return;
+  const frozenFrame = document.createElement('canvas');
+  if (!drawCameraFrame(elements.liveCameraVideo, frozenFrame, 1500)) {
+    notify('The camera frame is not ready yet.');
+    return;
+  }
+  model.freezePreview = true;
+  setImageSource(frozenFrame, `portrait-${new Date().toISOString().slice(0, 10)}.png`);
+  updateLiveUi();
+  window.clearTimeout(freezePreviewTimer);
+  freezePreviewTimer = window.setTimeout(returnToLive, 3000);
+  void createPngBlob().then(saveGalleryFreeze).then(() => refreshGallery()).catch((error: unknown) => {
+    console.error('The frozen portrait could not be saved to the local gallery.', error);
+    notify(error instanceof Error ? error.message : 'The portrait could not be saved to the gallery.');
+  });
+  notify('Portrait frozen for 3 seconds and saved to the gallery.');
+}
+
+function returnToLive(): void {
+  window.clearTimeout(freezePreviewTimer);
+  if (!model.liveCameraActive || !liveFrameCanvas) return;
+  model.freezePreview = false;
+  setImageSource(liveFrameCanvas, 'live-portrait.png');
+  updateLiveUi();
+}
+
+async function previewGalleryFreeze(freeze: GalleryFreeze): Promise<void> {
+  const url = URL.createObjectURL(freeze.blob);
+  const image = new Image();
+  let retainedUrl = false;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('This saved portrait could not be opened.'));
+      image.src = url;
+    });
+    $('gallery-overlay').classList.add('is-hidden');
+    if (model.liveCameraActive) {
+      window.clearTimeout(freezePreviewTimer);
+      model.freezePreview = true;
+      setImageSource(image, 'gallery-portrait.png', url);
+      updateLiveUi();
+    } else {
+      setImageSource(image, 'gallery-portrait.png', url);
+    }
+    retainedUrl = true;
+  } catch (error) {
+    notify(error instanceof Error ? error.message : 'The saved portrait could not be opened.');
+  } finally {
+    if (!retainedUrl) URL.revokeObjectURL(url);
+  }
+}
+
+function openShareDialog(): void {
+  if (!model.image || !model.currentSvg) {
+    notify('Take a photo or choose one before sharing.');
+    return;
+  }
+  if (model.liveCameraActive) stopLiveCamera(true);
+  elements.shareNative.hidden = typeof navigator.share !== 'function';
+  elements.shareDialog.showModal();
+}
+
+async function createPngBlob(): Promise<Blob> {
+  if (!model.image || !model.currentSvg) throw new Error('There is no artwork to export yet.');
+  const image = new Image();
+  const svgUrl = URL.createObjectURL(new Blob([model.currentSvg], { type: 'image/svg+xml;charset=utf-8' }));
+  try {
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error('The SVG could not be prepared as an image.'));
+      image.src = svgUrl;
+    });
+    const scale = Math.min(1, 4096 / Math.max(model.gridCols * model.tileSize, model.gridRows * model.tileSize));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(model.gridCols * model.tileSize * scale));
+    canvas.height = Math.max(1, Math.round(model.gridRows * model.tileSize * scale));
+    const context = canvas.getContext('2d');
+    if (!context) throw new Error('This browser could not prepare the PNG image.');
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    return await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((blob) => {
+        if (blob) resolve(blob);
+        else reject(new Error('The PNG image could not be created.'));
+      }, 'image/png');
+    });
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+}
+
+function downloadBlob(blob: Blob, fileName: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  notify(`Saved ${fileName}`);
+}
+
+async function sharePngWithDevice(): Promise<void> {
+  if (!navigator.share) {
+    notify('Device sharing is not available. Save the PNG or SVG instead.');
+    return;
+  }
+  try {
+    const blob = await createPngBlob();
+    const file = new File([blob], `${model.fileName}.png`, { type: 'image/png' });
+    if (!navigator.canShare?.({ files: [file] })) {
+      elements.shareDialog.close();
+      notify('This device cannot share image files. Save the PNG or SVG instead.');
+      return;
+    }
+    await navigator.share({ files: [file], title: model.config.applicationTitle });
+    elements.shareDialog.close();
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') return;
+    elements.shareDialog.close();
+    notify(error instanceof Error ? error.message : 'The share sheet could not be opened.');
+  }
+}
+
+async function downloadPng(): Promise<void> {
+  try {
+    downloadBlob(await createPngBlob(), `${model.fileName}.png`);
+  } catch (error) {
+    notify(error instanceof Error ? error.message : 'The PNG image could not be saved.');
+  }
+}
+
 function downloadSvg(): void {
-  if (!model.currentSvg) return;
+  if (!model.image || !model.currentSvg) {
+    notify('Take a photo or choose one before exporting.');
+    return;
+  }
   const blob = new Blob([model.currentSvg], { type: 'image/svg+xml;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
@@ -825,7 +1498,10 @@ function downloadSvg(): void {
 }
 
 async function copySvg(): Promise<void> {
-  if (!model.currentSvg) return;
+  if (!model.image || !model.currentSvg) {
+    notify('Take a photo or choose one before copying the SVG.');
+    return;
+  }
   try {
     if (navigator.clipboard?.writeText) {
       await navigator.clipboard.writeText(model.currentSvg);
@@ -870,8 +1546,29 @@ function syncTileSize(value: string): void {
   rebuildArtwork();
 }
 
+function randomizeColors(): void {
+  if (!model.clusters.length) {
+    notify('Take a photo before choosing new colors.');
+    return;
+  }
+  const colors = getActiveTheme(model.config).colors;
+  const shuffled = Array.from({ length: colors.length }, (_, index) => index);
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const other = Math.floor(Math.random() * (index + 1));
+    [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+  }
+  model.clusterToTheme = model.clusters.map((_, index) => shuffled[index % shuffled.length]);
+  model.randomSeed = Math.floor(Math.random() * 999_999) + 1;
+  renderMapping();
+  renderArtwork();
+  notify('A fresh colorway is ready.');
+}
+
 function bindEvents(): void {
   $('upload-open').addEventListener('click', () => elements.fileInput.click());
+  $('empty-upload').addEventListener('click', () => elements.fileInput.click());
+  $('live-upload').addEventListener('click', () => elements.fileInput.click());
+  $('empty-camera').addEventListener('click', () => void openCamera());
   elements.dropZone.addEventListener('click', () => elements.fileInput.click());
   elements.fileInput.addEventListener('change', () => {
     const file = elements.fileInput.files?.[0];
@@ -890,14 +1587,79 @@ function bindEvents(): void {
     if (file) void openFile(file);
   });
 
-  elements.sampleSelect.addEventListener('change', () => {
-    void loadSample(elements.sampleSelect.value).catch((error: unknown) => {
-      notify(error instanceof Error ? error.message : 'Could not create sample artwork.');
-    });
-  });
   $('camera-open').addEventListener('click', () => void openCamera());
   $('capture-photo').addEventListener('click', () => void capturePhoto());
   $('camera-dialog').addEventListener('close', closeCamera);
+  $('live-start-camera').addEventListener('click', () => void startLiveCamera());
+  $('live-camera').addEventListener('click', freezeLiveCamera);
+  $('live-new-colors').addEventListener('click', randomizeColors);
+  $('live-admin').addEventListener('click', openAdminGate);
+  $('gallery-open').addEventListener('click', () => void openGallery());
+  $('gallery-close').addEventListener('click', () => $('gallery-overlay').classList.add('is-hidden'));
+  $('gallery-share').addEventListener('click', () => void shareSelectedGalleryFreezes());
+  $('return-to-live').addEventListener('click', returnToLive);
+  $('setting-logo-file').addEventListener('change', () => {
+    const file = ($('setting-logo-file') as HTMLInputElement).files?.[0];
+    if (file) void uploadLogo(file).catch((error: unknown) => notify(
+      error instanceof Error ? error.message : 'The logo could not be uploaded.',
+    ));
+    ($('setting-logo-file') as HTMLInputElement).value = '';
+  });
+  $('setting-font-file').addEventListener('change', () => {
+    const file = ($('setting-font-file') as HTMLInputElement).files?.[0];
+    if (file) void uploadFont(file).catch((error: unknown) => notify(
+      error instanceof Error ? error.message : 'The font could not be uploaded.',
+    ));
+    ($('setting-font-file') as HTMLInputElement).value = '';
+  });
+  $('remove-logo').addEventListener('click', () => {
+    const id = model.config.logoAssetId;
+    model.config.logoAssetId = null;
+    model.logoDataUrl = null;
+    model.logoOrigin = null;
+    if (id) void deleteBrandAsset(id).catch((error: unknown) => {
+      console.error('The saved logo could not be removed.', error);
+      notify('The saved logo could not be removed from local storage.');
+    });
+    persistSettings();
+    ($('setting-logo-preview') as HTMLImageElement).removeAttribute('src');
+    $('setting-logo-preview').classList.add('is-hidden');
+    renderArtwork();
+  });
+  $('remove-font').addEventListener('click', () => {
+    const id = model.config.fontAssetId;
+    model.config.fontAssetId = null;
+    model.config.useUploadedFont = false;
+    model.fontFamily = 'Arial, Helvetica, sans-serif';
+    model.fontDataUri = null;
+    if (id) void deleteBrandAsset(id).catch((error: unknown) => {
+      console.error('The saved font could not be removed.', error);
+      notify('The saved font could not be removed from local storage.');
+    });
+    persistSettings();
+    $('setting-font-name').textContent = 'System font';
+    ($('setting-font-choice') as HTMLSelectElement).value = 'system';
+    renderArtwork();
+  });
+  $('drawer-open').addEventListener('click', () => setDrawerOpen(true));
+  $('drawer-close').addEventListener('click', () => setDrawerOpen(false));
+  elements.drawerBackdrop.addEventListener('click', () => setDrawerOpen(false));
+  document.querySelectorAll<HTMLButtonElement>('[data-action="share"]').forEach((button) => {
+    button.addEventListener('click', openShareDialog);
+  });
+  $('share-native').addEventListener('click', () => void sharePngWithDevice());
+  $('share-download-png').addEventListener('click', () => {
+    elements.shareDialog.close();
+    void downloadPng();
+  });
+  $('share-download-svg').addEventListener('click', () => {
+    elements.shareDialog.close();
+    downloadSvg();
+  });
+  $('share-copy-svg').addEventListener('click', () => {
+    elements.shareDialog.close();
+    void copySvg();
+  });
 
   bindRange(elements.subjectThreshold, elements.subjectThresholdValue, (value) => {
     model.subjectThreshold = value;
@@ -969,17 +1731,7 @@ function bindEvents(): void {
     notify('Brand colors rotated.');
   });
   $('randomize-look').addEventListener('click', () => {
-    const colors = getActiveTheme(model.config).colors;
-    const shuffled = Array.from({ length: colors.length }, (_, index) => index);
-    for (let index = shuffled.length - 1; index > 0; index -= 1) {
-      const other = Math.floor(Math.random() * (index + 1));
-      [shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
-    }
-    model.clusterToTheme = model.clusters.map((_, index) => shuffled[index % shuffled.length]);
-    model.randomSeed = Math.floor(Math.random() * 999_999) + 1;
-    renderMapping();
-    renderArtwork();
-    notify('A fresh colorway is ready.');
+    randomizeColors();
   });
   $('auto-map').addEventListener('click', () => {
     model.clusterToTheme = mapClustersToTheme(model.clusters, getActiveTheme(model.config).colors);
@@ -1035,14 +1787,33 @@ function bindEvents(): void {
     if (event.button !== 0 && event.pointerType === 'mouse') return;
     const target = event.target;
     const messageTarget = target instanceof Element && target.closest('[data-draggable="message"]');
-    if (messageTarget && model.messageEnabled && model.tool === 'pan') {
+    const logoTarget = target instanceof Element && target.closest('[data-draggable="logo"]');
+    if (messageTarget && model.messageEnabled && !model.config.messagePositionLocked && model.tool === 'pan') {
       const rect = elements.artboard.getBoundingClientRect();
       const pointerCol = Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols);
       const pointerRow = Math.floor(((event.clientY - rect.top) / rect.height) * model.gridRows);
-      const origin = model.messageOrigin ?? { col: Math.floor(model.gridCols / 3), row: Math.floor(model.gridRows / 4) };
+      const box = messageTarget.getBoundingClientRect();
+      const origin = model.messageOrigin ?? {
+        col: Math.floor(((box.left - rect.left) / rect.width) * model.gridCols),
+        row: Math.floor(((box.top - rect.top) / rect.height) * model.gridRows),
+      };
       messageDragOffset = { col: pointerCol - origin.col, row: pointerRow - origin.row };
       elements.stage.setPointerCapture(event.pointerId);
       elements.stage.dataset.draggingMessage = 'true';
+      return;
+    }
+    if (logoTarget && !model.config.logoPositionLocked && model.tool === 'pan') {
+      const rect = elements.artboard.getBoundingClientRect();
+      const pointerCol = Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols);
+      const pointerRow = Math.floor(((event.clientY - rect.top) / rect.height) * model.gridRows);
+      const box = logoTarget.getBoundingClientRect();
+      const origin = model.logoOrigin ?? {
+        col: Math.floor(((box.left - rect.left) / rect.width) * model.gridCols),
+        row: Math.floor(((box.top - rect.top) / rect.height) * model.gridRows),
+      };
+      logoDragOffset = { col: pointerCol - origin.col, row: pointerRow - origin.row };
+      elements.stage.setPointerCapture(event.pointerId);
+      elements.stage.dataset.draggingLogo = 'true';
       return;
     }
     elements.stage.setPointerCapture(event.pointerId);
@@ -1065,6 +1836,16 @@ function bindEvents(): void {
       renderArtwork();
       return;
     }
+    if (elements.stage.dataset.draggingLogo === 'true') {
+      const rect = elements.artboard.getBoundingClientRect();
+      if (!rect.width || !rect.height) return;
+      model.logoOrigin = {
+        col: Math.floor(((event.clientX - rect.left) / rect.width) * model.gridCols) - logoDragOffset.col,
+        row: Math.floor(((event.clientY - rect.top) / rect.height) * model.gridRows) - logoDragOffset.row,
+      };
+      renderArtwork();
+      return;
+    }
     if (painting) {
       paintAt(event.clientX, event.clientY);
       return;
@@ -1079,9 +1860,20 @@ function bindEvents(): void {
     pointerStart = null;
     painting = false;
     delete elements.stage.dataset.draggingMessage;
+    delete elements.stage.dataset.draggingLogo;
   };
   elements.stage.addEventListener('pointerup', endPointer);
   elements.stage.addEventListener('pointercancel', endPointer);
+  elements.stage.addEventListener('dragover', (event) => event.preventDefault());
+  elements.stage.addEventListener('drop', (event) => {
+    const freezeId = (event as DragEvent).dataTransfer?.getData('text/plain');
+    if (!freezeId) return;
+    event.preventDefault();
+    void getGalleryFreeze(freezeId).then((freeze) => {
+      if (!freeze) throw new Error('That saved portrait is no longer available.');
+      return previewGalleryFreeze(freeze);
+    }).catch((error: unknown) => notify(error instanceof Error ? error.message : 'Could not preview the saved portrait.'));
+  });
   elements.stage.addEventListener('wheel', (event) => {
     event.preventDefault();
     setZoom(model.zoom + (event.deltaY < 0 ? 0.12 : -0.12));
@@ -1175,10 +1967,31 @@ function bindEvents(): void {
     model.config.lightCutoffPercent = value;
   });
   window.addEventListener('resize', fitArtboard);
+  window.addEventListener('pagehide', () => {
+    closeCamera();
+    if (model.liveCameraActive) stopLiveCamera(false);
+  });
+  window.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && document.body.classList.contains('drawer-open')) {
+      setDrawerOpen(false);
+    }
+  });
 }
 
 async function initialize(): Promise<void> {
   bindEvents();
+  try {
+    await loadBrandAssets();
+  } catch (error) {
+    console.error('Saved brand assets could not be restored.', error);
+    notify(error instanceof Error ? error.message : 'Saved brand assets could not be restored.');
+  }
+  try {
+    await refreshGallery();
+  } catch (error) {
+    console.error('The local portrait gallery is unavailable.', error);
+    notify(error instanceof Error ? error.message : 'Local portrait storage is unavailable.');
+  }
   elements.subjectThresholdValue.textContent = `${model.subjectThreshold}%`;
   elements.subjectContrastValue.textContent = `${model.subjectContrast}%`;
   elements.backgroundDensityValue.textContent = `${model.backgroundDensity}%`;
@@ -1190,10 +2003,11 @@ async function initialize(): Promise<void> {
   elements.subjectEnabled.checked = model.subjectEnabled;
   elements.messageEnabled.checked = model.messageEnabled;
   elements.showBadge.checked = model.showBadge;
+  model.messagePosition = model.config.messagePosition;
   applyWorkspaceSettings();
   setBackground('black');
   setTool('pan');
-  await loadSample('architecture');
+  updateLiveUi();
 }
 
 void initialize().catch((error: unknown) => {

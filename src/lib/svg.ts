@@ -29,12 +29,16 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     grid, tileSize, theme, enforceTheme, clusterToTheme, manualTileOverrides,
     background, includeBackground, hairlines, backgroundScatter, randomSeed,
     messageEnabled, message, messagePosition, messageOrigin, messageScale, brandSignature, showBadge,
+    logoDataUrl, logoAspectRatio, logoPosition, logoOrigin, fontFamily, fontDataUri,
   } = options;
   const width = grid.cols * tileSize;
   const height = grid.rows * tileSize;
   const messageBox = messageEnabled ? calculateMessageBox(
     grid.cols, grid.rows, tileSize, message, messagePosition, messageScale, messageOrigin,
   ) : null;
+  const logoBox = logoDataUrl
+    ? calculateLogoBox(grid.cols, grid.rows, logoPosition, logoOrigin, logoAspectRatio)
+    : null;
   const badgeBox = messageBox && showBadge && brandSignature.trim()
     ? calculateBadgeBox(messageBox, grid.cols, grid.rows)
     : null;
@@ -48,7 +52,9 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
   for (const cell of grid.cells) {
     const key = cellKey(cell.col, cell.row);
     occupied.add(key);
-    if (isInBox(cell.col, cell.row, messageBox) || isInBox(cell.col, cell.row, badgeBox)) continue;
+    if (isInBox(cell.col, cell.row, messageBox)
+      || isInBox(cell.col, cell.row, badgeBox)
+      || isInBox(cell.col, cell.row, logoBox)) continue;
 
     let color: TileOverride | undefined = manualTileOverrides.get(key);
     if (color === 'ERASE') continue;
@@ -70,7 +76,7 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     const [col, row] = key.split(',').map(Number);
     if (!Number.isInteger(col) || !Number.isInteger(row)) continue;
     if (col < 0 || col >= grid.cols || row < 0 || row >= grid.rows) continue;
-    if (isInBox(col, row, messageBox) || isInBox(col, row, badgeBox)) continue;
+    if (isInBox(col, row, messageBox) || isInBox(col, row, badgeBox) || isInBox(col, row, logoBox)) continue;
     addTilePath(pathsByColor, color, col, row, tileSize, gap, drawnTileSize);
   }
 
@@ -95,7 +101,16 @@ export function createArtworkSvg(options: ArtworkOptions): SvgResult {
     background,
     message,
     brandSignature,
+    fontFamily,
   );
+  if (logoBox && logoDataUrl) {
+    overlays.push(renderLogo(logoBox, tileSize, logoDataUrl));
+  }
+  if (fontDataUri && fontFamily === 'BrandUploaded') {
+    overlays.unshift(
+      `<defs><style>@font-face{font-family:BrandUploaded;src:url('${escapeXml(fontDataUri)}')}#message-overlay text,#brand-signature text{font-family:BrandUploaded,Arial,sans-serif}</style></defs>`,
+    );
+  }
   const description = `Square mosaic with ${tileCount} tiles and ${colorPathIndex} palette paths.`;
   const markup = [
     `<?xml version="1.0" encoding="UTF-8"?>`,
@@ -150,12 +165,7 @@ function calculateMessageBox(
   const estimatedHeight = safeLines.length * lineHeight + tileSize * 0.75;
   const boxCols = Math.min(cols, Math.max(4, Math.ceil(estimatedWidth / tileSize)));
   const boxRows = Math.min(rows, Math.max(2, Math.ceil(estimatedHeight / tileSize)));
-  let col = Math.max(0, Math.min(cols - boxCols, Math.floor((cols - boxCols) / 2)));
-  let row = Math.max(0, Math.min(rows - boxRows, Math.floor(rows * 0.24)));
-
-  if (position === 'center') row = Math.floor((rows - boxRows) / 2);
-  if (position === 'lower') row = Math.floor(rows * 0.56);
-  if (position === 'topleft') { col = 2; row = 2; }
+  let { col, row } = calculateOverlayOrigin(cols, rows, boxCols, boxRows, position, 2);
   if (origin) { col = origin.col; row = origin.row; }
 
   return {
@@ -166,6 +176,51 @@ function calculateMessageBox(
     lines: safeLines,
     fontSize: baseFont,
     lineHeight,
+  };
+}
+
+function calculateLogoBox(
+  cols: number,
+  rows: number,
+  position: MessagePosition,
+  origin: { col: number; row: number } | null,
+  aspectRatio: number,
+): GridBox {
+  const logoCols = Math.min(cols, Math.max(2, Math.floor(cols * 0.18)));
+  const logoRows = Math.min(rows, Math.max(2, Math.ceil(logoCols / Math.max(0.1, aspectRatio))));
+  const anchor = calculateOverlayOrigin(cols, rows, logoCols, logoRows, position, 2);
+  return {
+    col: origin ? Math.max(0, Math.min(cols - logoCols, origin.col)) : anchor.col,
+    row: origin ? Math.max(0, Math.min(rows - logoRows, origin.row)) : anchor.row,
+    cols: logoCols,
+    rows: logoRows,
+    lines: [],
+    fontSize: 0,
+    lineHeight: 0,
+  };
+}
+
+function calculateOverlayOrigin(
+  cols: number,
+  rows: number,
+  boxCols: number,
+  boxRows: number,
+  position: MessagePosition,
+  margin: number,
+): { col: number; row: number } {
+  const isLeft = position === 'topleft' || position === 'bottomleft' || position === 'middleleft';
+  const isRight = position === 'topright' || position === 'bottomright' || position === 'middleright';
+  const isTop = position === 'upper' || position === 'topleft' || position === 'topright';
+  const isBottom = position === 'lower' || position === 'bottomleft' || position === 'bottomright';
+  const col = isLeft
+    ? margin
+    : isRight ? cols - boxCols - margin : Math.floor((cols - boxCols) / 2);
+  const row = isTop
+    ? Math.max(margin, Math.floor(rows * 0.18))
+    : isBottom ? rows - boxRows - margin : Math.floor((rows - boxRows) / 2);
+  return {
+    col: Math.max(0, Math.min(cols - boxCols, col)),
+    row: Math.max(0, Math.min(rows - boxRows, row)),
   };
 }
 
@@ -190,6 +245,7 @@ function renderMessageAndBadge(
   background: BackgroundMode,
   message: string,
   brandSignature: string,
+  fontFamily: string,
 ): string[] {
   if (!messageBox) return [];
   const backgroundColor = background === 'white' ? '#FFFFFF' : '#080A09';
@@ -207,7 +263,7 @@ function renderMessageAndBadge(
   messageBox.lines.forEach((line, index) => {
     const baseline = Number((firstBaseline + index * messageBox.lineHeight).toFixed(2));
     elements.push(
-      `<text x="${messageX + Math.round(tileSize * 0.65)}" y="${baseline}" fill="${foregroundColor}" font-family="Arial, Helvetica, sans-serif" font-size="${messageBox.fontSize}" font-weight="800" letter-spacing="0.015em">${escapeXml(line)}</text>`,
+      `<text x="${messageX + Math.round(tileSize * 0.65)}" y="${baseline}" fill="${foregroundColor}" font-family="${escapeXml(fontFamily)}" font-size="${messageBox.fontSize}" font-weight="800" letter-spacing="0.015em">${escapeXml(line)}</text>`,
     );
   });
   elements.push('</g>');
@@ -226,10 +282,14 @@ function renderMessageAndBadge(
     const fontSize = Math.max(10, Math.round(iconSize * 0.68));
     elements.push(`<g id="brand-signature" fill="${foregroundColor}">`);
     elements.push(`<path d="M${iconX} ${iconY}h${iconSize * 0.48}v${iconSize * 0.48}h-${iconSize * 0.48}zM${iconX + iconSize * 0.52} ${iconY}h${iconSize * 0.48}v${iconSize * 0.48}h-${iconSize * 0.48}zM${iconX} ${iconY + iconSize * 0.52}h${iconSize * 0.48}v${iconSize * 0.48}h-${iconSize * 0.48}z"/>`);
-    elements.push(`<text x="${iconX + iconSize + tileSize * 0.35}" y="${y + height * 0.58}" font-family="Arial, Helvetica, sans-serif" font-size="${fontSize}" font-weight="800">${escapeXml(brandSignature.trim())}</text>`);
+    elements.push(`<text x="${iconX + iconSize + tileSize * 0.35}" y="${y + height * 0.58}" font-family="${escapeXml(fontFamily)}" font-size="${fontSize}" font-weight="800">${escapeXml(brandSignature.trim())}</text>`);
     elements.push('</g>');
   }
   return elements;
+}
+
+function renderLogo(box: GridBox, tileSize: number, dataUrl: string): string {
+  return `<image data-draggable="logo" x="${box.col * tileSize}" y="${box.row * tileSize}" width="${box.cols * tileSize}" height="${box.rows * tileSize}" href="${escapeXml(dataUrl)}" preserveAspectRatio="xMidYMid meet"/>`;
 }
 
 function isInBox(col: number, row: number, box: GridBox | null): boolean {

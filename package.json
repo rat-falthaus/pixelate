@@ -4,15 +4,20 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build": "astro build",
+    "dev": "node scripts/copy-vision-assets.mjs && astro dev",
+    "build": "node scripts/copy-vision-assets.mjs && astro build && node scripts/build-offline.mjs",
     "preview": "astro preview",
-    "check": "tsc --noEmit"
+    "check": "tsc --noEmit",
+    "lint": "oxlint .",
+    "format": "oxfmt ."
   },
   "dependencies": {
+    "@mediapipe/tasks-vision": "1.2.3",
     "astro": "^7.4.11"
   },
   "devDependencies": {
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
     "typescript": "^5.8.3"
   }
 }

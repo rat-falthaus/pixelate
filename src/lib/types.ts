@@ -1,8 +1,18 @@
 export type BackgroundMode = 'black' | 'white' | 'transparent';
 export type ToolMode = 'pan' | 'recolor' | 'subject';
 export type MaskBrushMode = 'keep' | 'background';
-export type MessagePosition = 'upper' | 'center' | 'lower' | 'topleft';
+export type MessagePosition =
+  | 'upper'
+  | 'center'
+  | 'lower'
+  | 'topleft'
+  | 'topright'
+  | 'middleleft'
+  | 'middleright'
+  | 'bottomleft'
+  | 'bottomright';
 export type TileOverride = string | 'ERASE';
+export type ImageSource = HTMLImageElement | HTMLCanvasElement;
 
 export interface BrandTheme {
   id: string;
@@ -26,6 +36,15 @@ export interface StudioConfig {
   defaultMessage: string;
   enforceTheme: boolean;
   fairMode: boolean;
+  messagePosition: MessagePosition;
+  logoPosition: MessagePosition;
+  messagePositionLocked: boolean;
+  logoPositionLocked: boolean;
+  logoAssetId: string | null;
+  fontAssetId: string | null;
+  useUploadedFont: boolean;
+  clearGalleryAfterShare: boolean;
+  galleryClearDelaySeconds: number;
   darkCutoffPercent: number;
   lightCutoffPercent: number;
   hairlines: boolean;
@@ -93,11 +112,17 @@ export interface ArtworkOptions {
   messageScale: number;
   brandSignature: string;
   showBadge: boolean;
+  logoDataUrl: string | null;
+  logoAspectRatio: number;
+  logoPosition: MessagePosition;
+  logoOrigin: { col: number; row: number } | null;
+  fontFamily: string;
+  fontDataUri: string | null;
 }
 
 export interface AppModel {
   config: StudioConfig;
-  image: HTMLImageElement | null;
+  image: ImageSource | null;
   fileName: string;
   tileSize: number;
   freeColorCount: number;
@@ -113,7 +138,12 @@ export interface AppModel {
   message: string;
   messagePosition: MessagePosition;
   messageOrigin: { col: number; row: number } | null;
+  logoOrigin: { col: number; row: number } | null;
   messageScale: number;
+  logoDataUrl: string | null;
+  logoAspectRatio: number;
+  fontFamily: string;
+  fontDataUri: string | null;
   showBadge: boolean;
   clusters: ColorCluster[];
   cells: PhotoCell[];
@@ -132,4 +162,6 @@ export interface AppModel {
   panX: number;
   panY: number;
   showOriginal: boolean;
+  liveCameraActive: boolean;
+  freezePreview: boolean;
 }
